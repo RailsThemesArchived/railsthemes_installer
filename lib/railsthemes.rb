@@ -1,4 +1,5 @@
-require "railsthemes/version"
+require 'railsthemes/version'
+require 'fileutils'
 
 module Railsthemes
 
@@ -29,6 +30,22 @@ module Railsthemes
     end
   end
 
+  def self.read_from_file_system filepath
+    if File.directory?(filepath)
+      Dir.entries(filepath).each do |entry|
+        next if entry == '.' || entry == '..'
+        copy_with_replacement filepath, entry
+      end
+    end
+  end
+
+  def self.copy_with_replacement filepath, entry
+    FileUtils.cp File.join(filepath, entry), entry
+  end
+
+  def self.download_from_hash hash
+  end
+
   def self.log_and_abort s
     abort s
   end
@@ -46,20 +63,5 @@ railsthemes install --help
 railsthemes install --file filepath
   install from the local filesystem
     EOS
-  end
-
-  def self.read_from_file_system filepath
-    if File.directory?(filepath)
-      Dir.entries(filepath).each do |entry|
-        next if entry == '.' || entry == '..'
-        copy_with_replacement File.join(filepath, entry)
-      end
-    end
-  end
-
-  def self.copy_with_replacement filepath
-  end
-
-  def self.download_from_hash hash
   end
 end

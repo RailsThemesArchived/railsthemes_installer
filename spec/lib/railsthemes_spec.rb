@@ -54,8 +54,8 @@ describe Railsthemes do
 
       it 'should copy the files from that directory into the Rails app' do
         mock(Dir).entries('filepath') { ['a', 'b'] }
-        mock(Railsthemes).copy_with_replacement('filepath/a')
-        mock(Railsthemes).copy_with_replacement('filepath/b')
+        mock(Railsthemes).copy_with_replacement('filepath', 'a')
+        mock(Railsthemes).copy_with_replacement('filepath', 'b')
         Railsthemes.read_from_file_system('filepath')
       end
     end
@@ -71,5 +71,10 @@ describe Railsthemes do
 
   describe :download_from_hash
 
-  describe :copy_with_replacement
+  describe :copy_with_replacement do
+    it 'should copy the file to the local directory' do
+      mock(FileUtils).cp('fp/src', 'src')
+      Railsthemes.copy_with_replacement 'fp', 'src'
+    end
+  end
 end
