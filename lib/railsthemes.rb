@@ -40,7 +40,11 @@ module Railsthemes
   end
 
   def self.copy_with_replacement filepath, entry
-    FileUtils.cp File.join(filepath, entry), entry
+    if File.exists?(entry)
+      # not sure if I should put in a force here, might be better to overwrite
+      FileUtils.cp entry, File.join(entry + '.old')
+    end
+    FileUtils.cp File.join(filepath, entry), entry, :force
   end
 
   def self.download_from_hash hash

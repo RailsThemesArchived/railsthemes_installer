@@ -72,9 +72,27 @@ describe Railsthemes do
   describe :download_from_hash
 
   describe :copy_with_replacement do
-    it 'should copy the file to the local directory' do
-      mock(FileUtils).cp('fp/src', 'src')
-      Railsthemes.copy_with_replacement 'fp', 'src'
+    context 'when the destination file does not exist' do
+      before do
+        stub(File).exists?('file') { false }
+      end
+
+      it 'should copy the file to the local directory' do
+        mock(FileUtils).cp('fp/file', 'file', :force)
+        Railsthemes.copy_with_replacement 'fp', 'file'
+      end
+    end
+
+    context 'when the destination file exists' do
+      before do
+        stub(File).exists?('file') { true }
+      end
+
+      it 'should make a backup of existing file if it is present' do
+        mock(FileUtils).cp('file', 'file.old')
+        mock(FileUtils).cp('fp/file', 'file', :force)
+        Railsthemes.copy_with_replacement 'fp', 'file'
+      end
     end
   end
 end
