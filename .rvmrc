@@ -1,1 +1,4 @@
+# because "Rails 3.1 requires at least Ruby 1.8.7"
+# can upgrade safely when we get past this
+# would also be nice to test 1.9.2, 1.9.3 to ensure that they work as well
 rvm use ree-1.8.7-head@railsthemes_installer --create
