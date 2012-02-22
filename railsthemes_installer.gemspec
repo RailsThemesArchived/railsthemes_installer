@@ -2,11 +2,11 @@
 require File.expand_path('../lib/railsthemes_installer/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["Anthony Panozzo"]
+  gem.authors       = ["railsthemes"]
   gem.email         = ["panozzaj@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{railsthemes.com installer gem}
+  gem.summary       = %q{Installs gems from railsthemes.com}
+  gem.homepage      = "https://github.com/RailsThemes/railsthemes_installer"
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
