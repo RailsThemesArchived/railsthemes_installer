@@ -8,7 +8,7 @@ describe Railsthemes do
         Railsthemes.install '--file', 'filepath'
       end
 
-      it 'should exit if filepath is nil' do
+      it 'should print error message and exit if filepath is nil' do
         dont_allow(Railsthemes).read_from_file(anything)
         dont_allow(Railsthemes).download_from_hash(anything)
         stub(Railsthemes).log_and_abort(/parameter/)
@@ -16,10 +16,19 @@ describe Railsthemes do
       end
     end
 
-    context 'otherwise' do
-      it 'should otherwise just pass in the hash to the hash reading argument' do
+    context 'hash given' do
+      it 'should pass the hash to the hash reading argument' do
         mock(Railsthemes).download_from_hash('hash')
         Railsthemes.install 'hash'
+      end
+    end
+
+    context 'when nothing given' do
+      it 'should print error message and exit' do
+        dont_allow(Railsthemes).read_from_file(anything)
+        dont_allow(Railsthemes).download_from_hash(anything)
+        stub(Railsthemes).log_and_abort(/parameter/)
+        Railsthemes.install '--file'
       end
     end
   end
