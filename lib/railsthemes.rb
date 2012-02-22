@@ -1,7 +1,6 @@
 require "railsthemes/version"
 
 module Railsthemes
-  def self.install
-    "Hello world!"
+  def self.install *args
   end
 end

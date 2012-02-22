@@ -1,5 +1,6 @@
 require 'spec_helper'
 
 describe Railsthemes do
-  pending 'test something'
+  describe 'install' do
+  end
 end

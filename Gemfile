@@ -6,3 +6,4 @@ gemspec
 # development gems
 gem 'rspec'
 gem 'rr'
+gem 'autotest'

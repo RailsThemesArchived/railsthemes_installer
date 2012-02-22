@@ -4,5 +4,5 @@ require 'bundler/setup'
 require 'railsthemes'
 
 RSpec.configure do |config|
-  # some (optional) config here
+  config.mock_with :rr
 end

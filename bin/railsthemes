@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
 
 require 'railsthemes'
-puts Railsthemes.install
+
+Railsthemes.install ARGV
