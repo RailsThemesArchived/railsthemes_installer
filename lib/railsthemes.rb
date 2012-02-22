@@ -4,7 +4,7 @@ module Railsthemes
   def self.install *args
     if args[0] == '--file'
       if args[1]
-        read_from_file args[1]
+        read_from_file_system args[1]
       else
         log_and_abort "The parameter --file means we need another parameter after it to specify what file to load from."
       end
@@ -21,7 +21,16 @@ module Railsthemes
     abort s
   end
 
-  def self.read_from_file filepath
+  def self.read_from_file_system filepath
+    if File.directory?(filepath)
+      Dir.entries(filepath).each do |entry|
+        next if entry == '.' || entry == '..'
+        copy_with_replacement File.join(filepath, entry)
+      end
+    end
+  end
+
+  def self.copy_with_replacement filepath
   end
 
   def self.download_from_hash hash
