@@ -23,6 +23,13 @@ describe Railsthemes do
       end
     end
 
+    context '--help given' do
+      it 'should print the usage' do
+        mock(Railsthemes).print_usage
+        Railsthemes.install '--help'
+      end
+    end
+
     context 'when nothing given' do
       it 'should print error message and exit' do
         dont_allow(Railsthemes).read_from_file_system(anything)

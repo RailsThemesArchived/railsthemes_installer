@@ -2,4 +2,4 @@
 
 require 'railsthemes'
 
-Railsthemes.install ARGV
+Railsthemes.execute ARGV
