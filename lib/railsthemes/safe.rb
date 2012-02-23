@@ -5,7 +5,7 @@ require 'tmpdir'
 module Railsthemes
   class Safe
     def self.verify_not_testing
-      raise 'should not call this in test environment' if ENVIRONMENT == 'test'
+      raise 'should not call this in test environment' if defined?(TESTING)
     end
 
     def self.system_call s
@@ -28,19 +28,27 @@ module Railsthemes
       Dir.entries filepath
     end
 
-    def self.rename_file
+    def self.rename_file src, dest
       verify_not_testing
-      FileUtils.rename entry, File.join(entry + '.old')
+      File.rename src, dest
     end
 
     def self.remove_directory dirpath
       verify_not_testing
-      FileUtils.rm_rf newdirpath
+      FileUtils.rm_rf dirpath
     end
 
-    def self.copy_file_with_force src, dest
+    def self.remove_file filepath
       verify_not_testing
-      FileUtils.cp src, dest, :force
+      if File.exists?(filepath)
+        File.delete filepath
+      end
+    end
+
+    def self.copy_file src, dest
+      verify_not_testing
+      FileUtils.mkdir_p(File.dirname(dest)) # create directory if necessary
+      FileUtils.cp src, dest
     end
 
     def self.directory? filepath
@@ -66,6 +74,15 @@ railsthemes install --help
 
 railsthemes install --file filepath
   install from the local filesystem
+      EOS
+    end
+
+    def self.print_post_installation_instructions
+      verify_not_testing
+      puts <<-EOS
+Your theme is installed!
+
+Make sure that you restart your server if it's currently running.
       EOS
     end
 

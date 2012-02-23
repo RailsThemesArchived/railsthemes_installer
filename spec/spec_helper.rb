@@ -3,7 +3,7 @@ require 'bundler/setup'
 
 require 'railsthemes'
 
-ENVIRONMENT = 'test'
+TESTING = true
 
 RSpec.configure do |config|
   config.mock_with :rr

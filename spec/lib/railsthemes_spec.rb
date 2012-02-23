@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe Railsthemes do
+  describe :execute do
+    Railsthemes.install '--file'
+  end
+
   describe :install do
     context 'when --file is given as a parameter' do
       it 'should read from the file argument' do
@@ -88,14 +92,14 @@ describe Railsthemes do
     end
   end
 
-  describe :untar do
+  describe :untar_string do
     it 'should return correct value for *.tar.gz file' do
-      result = Railsthemes.untar 'file.tar.gz', 'newdirpath'
+      result = Railsthemes.untar_string 'file.tar.gz', 'newdirpath'
       result.should == 'tar -zxf file.tar.gz -C newdirpath'
     end
 
     it 'should return correct value for *.tar file' do
-      result = Railsthemes.untar 'file.tar', 'newdirpath'
+      result = Railsthemes.untar_string 'file.tar', 'newdirpath'
       result.should == 'tar -xf file.tar -C newdirpath'
     end
   end
