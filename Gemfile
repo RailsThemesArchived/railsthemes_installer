@@ -4,6 +4,9 @@ source 'https://rubygems.org'
 gemspec
 
 # development gems
-gem 'rspec'
-gem 'rr'
-gem 'autotest'
+group :test do
+  gem 'rspec'
+  gem 'rr'
+  gem 'autotest'
+  gem "fakefs", :require => 'fakefs/safe'
+end
