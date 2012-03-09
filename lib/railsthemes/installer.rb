@@ -8,7 +8,7 @@ module Railsthemes
       @logger ||= Logger.new(STDOUT)
     end
 
-    def execute args
+    def execute args = []
       if args[0] == 'install' && args.length > 1
         install *args[1..-1]
       else
@@ -38,14 +38,19 @@ module Railsthemes
       if File.directory?(filepath)
         files = files_under(filepath)
         @logger.info 'Copying assets...'
-        files_under(filepath).each do |file|
+        files.each do |file|
           copy_with_replacement filepath, file
         end
         @logger.info 'Done copying assets.'
         post_copying_changes
         print_post_installation_instructions
       elsif archive?(filepath)
-        install_from_archive filepath
+        if File.exists?(filepath)
+          install_from_archive filepath
+          # no need for post_installation, because we haven't
+        else
+          Safe.log_and_abort 'Cannot find the file you specified.'
+        end
       else
         print_usage_and_abort 'Need to specify either a directory or an archive file when --file is used.'
       end
@@ -73,7 +78,7 @@ module Railsthemes
     end
 
     def install_from_archive filepath
-      newdirpath = tmpdir
+      newdirpath = generate_tmpdir
       Dir.mkdir newdirpath
       Safe.system_call untar_string(filepath, newdirpath)
       install_from_file_system newdirpath
@@ -98,7 +103,7 @@ module Railsthemes
       Utils.copy_with_path File.join(filepath, entry), entry
     end
 
-    def tmpdir
+    def generate_tmpdir
       File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%s"))
     end
 

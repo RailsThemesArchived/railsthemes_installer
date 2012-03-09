@@ -8,9 +8,15 @@ describe Railsthemes do
   end
 
   describe :execute do
+    it 'should print usage if no params given' do
+      mock(@installer).print_usage
+      @installer.execute
+    end
 
-    #Railsthemes.install '--file'
-
+    it 'should run the installer if installer is the first parameter' do
+      mock(@installer).install 'a', 'b', 'c'
+      @installer.execute(['install', 'a', 'b', 'c'])
+    end
   end
 
   describe :install do
@@ -58,7 +64,7 @@ describe Railsthemes do
         FileUtils.mkdir('filepath')
         FileUtils.touch('filepath/a')
         FileUtils.touch('filepath/b')
-        stub(@installer).post_copying_changes
+        mock(@installer).post_copying_changes
 
         mock(@installer).copy_with_replacement('filepath', /a$/)
         mock(@installer).copy_with_replacement('filepath', /b$/)
@@ -67,10 +73,15 @@ describe Railsthemes do
     end
 
     context 'when the filepath is an archive file' do
-      it 'should extract the archive file to a temp directory' do
-        stub(@installer).post_copying_changes
-        mock(@installer).tmpdir { 'tmpdir' }
-        mock(Railsthemes::Safe).system_call 'tar -xf tarfile.tar -C tmpdir'
+      it 'should extract the archive file to a temp directory if the archive exists' do
+        archive = 'tarfile.tar'
+        FileUtils.touch archive
+        mock(@installer).install_from_archive archive
+        @installer.install_from_file_system archive
+      end
+
+      it 'should print an error message and exit if the archive cannot be found' do
+        mock(Railsthemes::Safe).log_and_abort(/Cannot find/)
         @installer.install_from_file_system 'tarfile.tar'
       end
     end
@@ -120,6 +131,16 @@ describe Railsthemes do
         File.exists?('file').should == true
         File.exists?('file.old').should == true
       end
+    end
+  end
+
+  describe :install_from_archive do
+    it 'should extract the archive correctly' do
+      stub(@installer).generate_tmpdir { 'tmp' }
+      mock(@installer).install_from_file_system 'tmp'
+      mock(@installer).untar_string('filepath', anything) { 'untar string' }
+      mock(Railsthemes::Safe).system_call('untar string')
+      @installer.install_from_archive 'filepath'
     end
   end
 end
