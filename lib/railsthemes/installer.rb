@@ -56,25 +56,32 @@ module Railsthemes
       end
     end
 
+    # this happens after a successful copy so that we set up the environment correctly
     def post_copying_changes
       Utils.remove_file File.join('public', 'index.html')
       @logger.info 'Analyzing existing project structure...'
-      if `rake routes`.length == 0 # brand new app
-        `rails g controller Welcome index`
-        lines = []
-        File.open('config/routes.rb').each do |line|
-          if line =~ /  # root :to => 'welcome#index'/
-            lines << "  root :to => 'welcome#index'"
-          else
-            lines << line
-          end
-        end
-        File.open('config/routes.rb', 'w') do |f|
-          lines.each do |line|
-            f.puts line
-          end
+      create_welcome_controller unless routes_defined?
+    end
+
+    def create_welcome_controller
+      Safe.system_call('rails g controller Welcome index')
+      lines = []
+      File.open('config/routes.rb').each do |line|
+        if line =~ /  # root :to => 'welcome#index'/
+          lines << "  root :to => 'welcome#index'"
+        else
+          lines << line
         end
       end
+      File.open('config/routes.rb', 'w') do |f|
+        lines.each do |line|
+          f.puts line
+        end
+      end
+    end
+
+    def routes_defined?
+      Safe.system_call('rake routes').length > 0
     end
 
     def install_from_archive filepath

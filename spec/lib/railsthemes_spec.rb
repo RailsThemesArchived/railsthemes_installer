@@ -94,20 +94,6 @@ describe Railsthemes do
     end
   end
 
-  describe :untar_string do
-    it 'should return correct value for *.tar.gz file' do
-      result = @installer.untar_string 'file.tar.gz', 'newdirpath'
-      result.should == 'tar -zxf file.tar.gz -C newdirpath'
-    end
-
-    it 'should return correct value for *.tar file' do
-      result = @installer.untar_string 'file.tar', 'newdirpath'
-      result.should == 'tar -xf file.tar -C newdirpath'
-    end
-  end
-
-  describe :download_from_hash
-
   describe :copy_with_replacement do
     before do
       FileUtils.mkdir 'fp'
@@ -117,7 +103,7 @@ describe Railsthemes do
     context 'when the destination file does not exist' do
       it 'should copy the file to the local directory' do
         @installer.copy_with_replacement 'fp', 'file'
-        File.exists?('file').should == true
+        File.exists?('file').should be_true
       end
     end
 
@@ -128,8 +114,8 @@ describe Railsthemes do
 
       it 'should make a backup of existing file if it is present' do
         @installer.copy_with_replacement 'fp', 'file'
-        File.exists?('file').should == true
-        File.exists?('file.old').should == true
+        File.exists?('file').should be_true
+        File.exists?('file.old').should be_true
       end
     end
   end
@@ -143,4 +129,33 @@ describe Railsthemes do
       @installer.install_from_archive 'filepath'
     end
   end
+
+  describe :untar_string do
+    it 'should return correct value for *.tar.gz file' do
+      result = @installer.untar_string 'file.tar.gz', 'newdirpath'
+      result.should == 'tar -zxf file.tar.gz -C newdirpath'
+    end
+
+    it 'should return correct value for *.tar file' do
+      result = @installer.untar_string 'file.tar', 'newdirpath'
+      result.should == 'tar -xf file.tar -C newdirpath'
+    end
+  end
+
+  describe :archive? do
+    it 'should be true for tar file' do
+      @installer.archive?('test/a/b/c/d.tar').should be_true
+    end
+
+    it 'should be true for tar.gz file' do
+      @installer.archive?('test/a/b/c/d.tar.gz').should be_true
+    end
+
+    it 'should be false for other extensions' do
+      @installer.archive?('test/a/b/c.tar/d.zip').should be_false
+    end
+  end
+
+  describe :download_from_hash
+
 end
