@@ -1,6 +1,6 @@
 # Railsthemes
 
-TODO: Write a gem description
+This is a gem that helps you install a theme for your Rails app from RailsThemes.com. First, purchase a theme from the website. Then, install this gem and run it. You will get a download code, and you can pass this to the installer to install the theme (see below usage.) The themes at RailsThemes.com work for Rails 3.1+ (any that use the asset pipeline.)
 
 ## Installation
 
@@ -20,7 +20,13 @@ Or install it yourself as:
 
 Desired usage:
 
-    $ railsthemes install my_hash
+    $ railsthemes install download_code
+
+## Other notes
+
+This has been tested with Ruby 1.8.7, and should work with higher versions. 1.8.7 is the lowest version that Rails 3.1+ uses.
+
+Not sure if this will work for Windows users due to invoking tar on the command-line instead of using native Ruby. This is something that we can change going forward, just a matter of time.
 
 ## Contributing
 
