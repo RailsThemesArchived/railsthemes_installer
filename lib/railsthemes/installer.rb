@@ -22,6 +22,7 @@ module Railsthemes
     end
 
     def install *args
+      ensure_in_rails_root
       if args[0] == '--file'
         if args[1]
           install_from_file_system args[1]
@@ -36,6 +37,12 @@ module Railsthemes
         else
           print_usage_and_abort "railsthemes expects the hash that you got from the website as a parameter in order to download the theme you bought."
         end
+      end
+    end
+
+    def ensure_in_rails_root
+      unless File.directory?('app') && File.directory?('public')
+        Safe.log_and_abort 'Must be in the Rails root directory to use this gem.'
       end
     end
 

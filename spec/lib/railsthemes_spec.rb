@@ -20,6 +20,10 @@ describe Railsthemes do
   end
 
   describe :install do
+    before do
+      stub(@installer).ensure_in_rails_root
+    end
+
     context 'when --file is given as a parameter' do
       it 'should read from the file argument' do
         mock(@installer).install_from_file_system('filepath')
@@ -133,12 +137,12 @@ describe Railsthemes do
   describe :untar_string do
     it 'should return correct value for *.tar.gz file' do
       result = @installer.untar_string 'file.tar.gz', 'newdirpath'
-      result.should == 'tar -zxf file.tar.gz'
+      result.should == 'tar -zxf file.tar.gz --strip 1'
     end
 
     it 'should return correct value for *.tar file' do
       result = @installer.untar_string 'file.tar', 'newdirpath'
-      result.should == 'tar -xf file.tar'
+      result.should == 'tar -xf file.tar --strip 1'
     end
   end
 
