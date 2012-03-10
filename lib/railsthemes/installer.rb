@@ -1,11 +1,16 @@
 require 'date'
 require 'fileutils'
+require 'logger'
+require 'tmpdir'
 
 module Railsthemes
   class Installer
-    def initialize logger
+    def initialize logger = nil
       @logger = logger
       @logger ||= Logger.new(STDOUT)
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{msg}\n"
+      end
     end
 
     def execute args = []
@@ -85,11 +90,11 @@ module Railsthemes
     end
 
     def install_from_archive filepath
-      newdirpath = generate_tmpdir
-      Dir.mkdir newdirpath
-      Safe.system_call untar_string(filepath, newdirpath)
-      install_from_file_system newdirpath
-      FileUtils.rm_rf newdirpath
+      tempdir = generate_tmpdir
+      Dir.mkdir tempdir
+      Safe.system_call untar_string(filepath, tempdir)
+      install_from_file_system tempdir
+      #FileUtils.rm_rf tempdir
     end
 
     def files_under filepath, accum = []
@@ -120,7 +125,7 @@ module Railsthemes
 
     def untar_string filepath, newdirpath
       gzipped = (filepath =~ /\.gz$/) ? 'z' : ''
-      "tar -#{gzipped}xf #{filepath} -C #{newdirpath}"
+      "tar -#{gzipped}xf #{filepath} --strip 1"
     end
 
     def print_usage

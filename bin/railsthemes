@@ -2,4 +2,5 @@
 
 require 'railsthemes'
 
-Railsthemes.execute ARGV
+installer = Railsthemes::Installer.new
+installer.execute ARGV

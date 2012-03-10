@@ -1,5 +1,4 @@
 require 'fileutils'
-require 'tmpdir'
 
 # a bunch of things that should never be called in testing due to side effects
 module Railsthemes

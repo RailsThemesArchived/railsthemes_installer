@@ -1,5 +1,4 @@
 require 'fileutils'
-require 'tmpdir'
 
 # a bunch of things that should never be called in testing due to side effects
 module Railsthemes
@@ -11,6 +10,10 @@ module Railsthemes
 
     def self.log_and_abort s
       abort s
+    end
+
+    def self.verify_not_testing
+      false
     end
   end
 end
