@@ -5,61 +5,7 @@ describe Railsthemes::Installer do
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
-  end
-
-  describe :execute do
-    it 'should print usage if no params given' do
-      mock(@installer).print_usage
-      @installer.execute
-    end
-
-    it 'should run the installer if installer is the first parameter' do
-      mock(@installer).install 'a', 'b', 'c'
-      @installer.execute(['install', 'a', 'b', 'c'])
-    end
-  end
-
-  describe :install do
-    before do
-      stub(@installer).ensure_in_rails_root
-    end
-
-    context 'when --file is given as a parameter' do
-      it 'should read from the file argument' do
-        mock(@installer).install_from_file_system('filepath')
-        @installer.install '--file', 'filepath'
-      end
-
-      it 'should print usage and error message and exit if filepath is nil' do
-        dont_allow(@installer).install_from_file_system(anything)
-        dont_allow(@installer).download_from_code(anything)
-        mock(@installer).print_usage_and_abort(/parameter/)
-        @installer.install '--file'
-      end
-    end
-
-    context 'code given' do
-      it 'should download that code' do
-        mock(@installer).download_from_code('code')
-        @installer.install 'code'
-      end
-    end
-
-    context '--help given' do
-      it 'should print the usage' do
-        mock(@installer).print_usage
-        @installer.install '--help'
-      end
-    end
-
-    context 'when no parameters given' do
-      it 'should print usage and error message and exit' do
-        dont_allow(@installer).install_from_file_system(anything)
-        dont_allow(@installer).download_from_code(anything)
-        mock(@installer).print_usage_and_abort(/parameter/)
-        @installer.install '--file'
-      end
-    end
+    stub(@installer).ensure_in_rails_root
   end
 
   describe :install_from_file_system do
@@ -78,7 +24,7 @@ describe Railsthemes::Installer do
 
     context 'when the filepath is an archive file' do
       it 'should extract the archive file to a temp directory if the archive exists' do
-        archive = 'tarfile.tar'
+        archive = 'tarfile.tar.gz'
         FileUtils.touch archive
         mock(@installer).install_from_archive archive
         @installer.install_from_file_system archive
@@ -86,7 +32,7 @@ describe Railsthemes::Installer do
 
       it 'should print an error message and exit if the archive cannot be found' do
         mock(Railsthemes::Safe).log_and_abort(/Cannot find/)
-        @installer.install_from_file_system 'tarfile.tar'
+        @installer.install_from_file_system 'tarfile.tar.gz'
       end
     end
 
@@ -139,18 +85,9 @@ describe Railsthemes::Installer do
       result = @installer.untar_string 'file.tar.gz', 'newdirpath'
       result.should == 'tar -zxf file.tar.gz'
     end
-
-    it 'should return correct value for *.tar file' do
-      result = @installer.untar_string 'file.tar', 'newdirpath'
-      result.should == 'tar -xf file.tar'
-    end
   end
 
   describe :archive? do
-    it 'should be true for tar file' do
-      @installer.archive?('test/a/b/c/d.tar').should be_true
-    end
-
     it 'should be true for tar.gz file' do
       @installer.archive?('test/a/b/c/d.tar.gz').should be_true
     end
@@ -192,7 +129,6 @@ describe Railsthemes::Installer do
     end
 
     before do
-      stub(@installer).ensure_in_rails_root
       stub(@installer).post_copying_changes
       FakeFS::FileSystem.clone('spec/fixtures')
     end
@@ -212,17 +148,9 @@ describe Railsthemes::Installer do
     it 'should extract correctly from directory' do
       filename = 'spec/fixtures/blank-assets'
       stubby filename
-      @installer.install '--file', filename
+      @installer.install_from_file_system filename
       verify_end_to_end_operation
     end
-
-    #it 'should extract correctly from archive file' do
-    #  filename = 'spec/fixtures/blank-assets.tar'
-    #  stubby /\/tmp/
-    #  @installer.install '--file', filename
-    #  print_directory('/tmp')
-    #  verify_end_to_end_operation
-    #end
 
     #it 'should extract correctly from zipped archive file' do
     #  filename = 'spec/fixtures/blank-assets.tar.gz'
@@ -233,6 +161,8 @@ describe Railsthemes::Installer do
     #end
   end
 
-  describe :download_from_code
+  describe :download_from_code do
+
+  end
 
 end

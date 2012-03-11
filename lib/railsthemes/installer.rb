@@ -19,33 +19,6 @@ module Railsthemes
       end
     end
 
-    def execute args = []
-      if args[0] == 'install' && args.length > 1
-        install *args[1..-1]
-      else
-        print_usage
-      end
-    end
-
-    def install *args
-      ensure_in_rails_root
-      if args[0] == '--file'
-        if args[1]
-          install_from_file_system args[1]
-        else
-          print_usage_and_abort "The parameter --file means we need another parameter after it to specify what file to load from."
-        end
-      elsif args[0] == '--help'
-        print_usage
-      else
-        if args[0]
-          download_from_code args[0]
-        else
-          print_usage_and_abort "railsthemes expects the download code that you got from the website as a parameter in order to download the theme you bought."
-        end
-      end
-    end
-
     def ensure_in_rails_root
       unless File.directory?('app') && File.directory?('public')
         Safe.log_and_abort 'Must be in the Rails root directory to use this gem.'
@@ -54,6 +27,7 @@ module Railsthemes
 
     def install_from_file_system source_filepath
       if File.directory?(source_filepath)
+        ensure_in_rails_root
         files = files_under(source_filepath)
         @logger.info 'Copying assets...'
         files.each do |file|
@@ -99,6 +73,7 @@ module Railsthemes
       files.select{|f| !File.directory?(File.join(filepath, f))}
     end
 
+    # to be replaced with Thor copy
     def copy_with_backup base_filepath, entry
       if File.exists?(entry)
         # not sure if I should put in a cp -f here, might be better to toss error
@@ -113,16 +88,16 @@ module Railsthemes
     end
 
     def archive? filepath
-      filepath =~ /\.tar$/ || filepath =~ /\.tar\.gz$/
+      filepath =~ /\.tar\.gz$/
     end
 
     def untar_string filepath, newdirpath
-      gzipped = (filepath =~ /\.gz$/) ? 'z' : ''
-      "tar -#{gzipped}xf #{filepath}"
+      "tar -zxf #{filepath}"
     end
 
 
     # this happens after a successful copy so that we set up the environment correctly
+    # for people to view the theme correctly
     def post_copying_changes
       Utils.remove_file File.join('public', 'index.html')
       @logger.info 'Analyzing existing project structure...'
@@ -152,21 +127,6 @@ module Railsthemes
       end
     end
 
-
-    def print_usage
-      @logger.info <<-EOS
-Usage:
-------
-railsthemes install <download code>
-  install a theme from the railsthemes website
-
-railsthemes install --help
-  this message
-
-railsthemes install --file filepath
-  install from the local filesystem
-      EOS
-    end
 
     def print_post_installation_instructions
       @logger.info <<-EOS

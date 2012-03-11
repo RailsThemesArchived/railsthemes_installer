@@ -1,6 +1,27 @@
 #!/usr/bin/env ruby
+require "rubygems"
+require "thor"
+require "railsthemes"
 
-require 'railsthemes'
+class Installer < Thor
+  desc "install CODE", "Install from RailsThemes.com using your download code"
+  method_option :file, :aliases => "-f", :desc => "Use local filename instead of downloading", :type => :boolean
 
-installer = Railsthemes::Installer.new
-installer.execute ARGV
+  def install code_or_file
+    if options[:file]
+      file = code_or_file
+      abort 'Please specify a file to install from' unless file
+      puts "Installing from file: #{file}."
+      Railsthemes::Installer.new.install_from_file_system file
+    else
+      code = code_or_file
+      abort 'Please specify a code to install from' unless code
+      puts "Installing from code: #{code}."
+      Railsthemes::Installer.new.download_from_code code
+    end
+  end
+
+  # AP: other options could include list, remove, help, etc.
+end
+
+Installer.start ARGV
