@@ -3,6 +3,11 @@ require 'fileutils'
 require 'logger'
 require 'tmpdir'
 
+# TODO:
+# check for source control system
+# consider changing structure of installer to use separate classes to 
+#    handle different installation types
+# 
 module Railsthemes
   class Installer
     def initialize logger = nil
@@ -80,6 +85,12 @@ module Railsthemes
 
     def download_from_code code
       @logger.info "Downloading from code #{code}"
+      tempdir = generate_tmpdir + 'dl'
+      FileUtils.mkdir_p tempdir
+      archive = File.join(tempdir, 'archive.tar.gz')
+      Utils.download_file 'http://localhost:3001/download', archive
+      install_from_archive archive
+      FileUtils.rm_rf tempdir
     end
 
 
@@ -159,6 +170,7 @@ railsthemes install --file filepath
 
     def print_post_installation_instructions
       @logger.info <<-EOS
+
 Yay! Your theme is installed!
 
 What now?
