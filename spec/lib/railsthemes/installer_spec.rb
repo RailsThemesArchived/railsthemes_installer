@@ -137,12 +137,12 @@ describe Railsthemes::Installer do
   describe :untar_string do
     it 'should return correct value for *.tar.gz file' do
       result = @installer.untar_string 'file.tar.gz', 'newdirpath'
-      result.should == 'tar -zxf file.tar.gz --strip 1'
+      result.should == 'tar -zxf file.tar.gz'
     end
 
     it 'should return correct value for *.tar file' do
       result = @installer.untar_string 'file.tar', 'newdirpath'
-      result.should == 'tar -xf file.tar --strip 1'
+      result.should == 'tar -xf file.tar'
     end
   end
 

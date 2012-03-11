@@ -107,7 +107,7 @@ module Railsthemes
 
     def untar_string filepath, newdirpath
       gzipped = (filepath =~ /\.gz$/) ? 'z' : ''
-      "tar -#{gzipped}xf #{filepath} --strip 1"
+      "tar -#{gzipped}xf #{filepath}"
     end
 
 
@@ -125,7 +125,7 @@ module Railsthemes
     def create_welcome_controller
       Safe.system_call('rails g controller Welcome index')
       lines = []
-      if File.exists('config/routes.rb')
+      if File.exists?('config/routes.rb')
         File.open('config/routes.rb').each do |line|
           if line =~ /  # root :to => 'welcome#index'/
             lines << "  root :to => 'welcome#index'"
