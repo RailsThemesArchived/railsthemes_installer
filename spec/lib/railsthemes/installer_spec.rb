@@ -32,16 +32,16 @@ describe Railsthemes::Installer do
 
       it 'should print usage and error message and exit if filepath is nil' do
         dont_allow(@installer).install_from_file_system(anything)
-        dont_allow(@installer).download_from_hash(anything)
+        dont_allow(@installer).download_from_code(anything)
         mock(@installer).print_usage_and_abort(/parameter/)
         @installer.install '--file'
       end
     end
 
-    context 'hash given' do
-      it 'should download that hash' do
-        mock(@installer).download_from_hash('hash')
-        @installer.install 'hash'
+    context 'code given' do
+      it 'should download that code' do
+        mock(@installer).download_from_code('code')
+        @installer.install 'code'
       end
     end
 
@@ -55,7 +55,7 @@ describe Railsthemes::Installer do
     context 'when no parameters given' do
       it 'should print usage and error message and exit' do
         dont_allow(@installer).install_from_file_system(anything)
-        dont_allow(@installer).download_from_hash(anything)
+        dont_allow(@installer).download_from_code(anything)
         mock(@installer).print_usage_and_abort(/parameter/)
         @installer.install '--file'
       end
@@ -233,6 +233,6 @@ describe Railsthemes::Installer do
     #end
   end
 
-  describe :download_from_hash
+  describe :download_from_code
 
 end

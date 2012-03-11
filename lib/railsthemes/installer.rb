@@ -34,9 +34,9 @@ module Railsthemes
         print_usage
       else
         if args[0]
-          download_from_hash args[0]
+          download_from_code args[0]
         else
-          print_usage_and_abort "railsthemes expects the hash that you got from the website as a parameter in order to download the theme you bought."
+          print_usage_and_abort "railsthemes expects the download code that you got from the website as a parameter in order to download the theme you bought."
         end
       end
     end
@@ -78,8 +78,8 @@ module Railsthemes
       FileUtils.rm_rf tempdir
     end
 
-    def download_from_hash hash
-      @logger.info "Downloading from hash #{hash}"
+    def download_from_code code
+      @logger.info "Downloading from code #{code}"
     end
 
 
@@ -146,7 +146,7 @@ module Railsthemes
       @logger.info <<-EOS
 Usage:
 ------
-railsthemes install HASH
+railsthemes install <download code>
   install a theme from the railsthemes website
 
 railsthemes install --help
@@ -159,9 +159,13 @@ railsthemes install --file filepath
 
     def print_post_installation_instructions
       @logger.info <<-EOS
-Your theme is installed!
+Yay! Your theme is installed!
 
-Make sure that you restart your server if it's currently running.
+What now?
+1) Ensure your new application layout file contains everything that you wanted
+   from the old one.
+2) Restart your development server if it is currently running.
+3) Let us know how it went: @railsthemes or team@railsthemes.com.
       EOS
     end
 
