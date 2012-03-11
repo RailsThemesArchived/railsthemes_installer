@@ -1,7 +1,7 @@
 require 'spec_helper'
-require 'logger'
+require 'railsthemes'
 
-describe Railsthemes do
+describe Railsthemes::Installer do
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
@@ -70,8 +70,8 @@ describe Railsthemes do
         FileUtils.touch('filepath/b')
         mock(@installer).post_copying_changes
 
-        mock(@installer).copy_with_replacement('filepath', /a$/)
-        mock(@installer).copy_with_replacement('filepath', /b$/)
+        mock(@installer).copy_with_backup('filepath', /a$/)
+        mock(@installer).copy_with_backup('filepath', /b$/)
         @installer.install_from_file_system('filepath')
       end
     end
@@ -98,7 +98,7 @@ describe Railsthemes do
     end
   end
 
-  describe :copy_with_replacement do
+  describe :copy_with_backup do
     before do
       FileUtils.mkdir 'fp'
       FileUtils.touch 'fp/file'
@@ -106,7 +106,7 @@ describe Railsthemes do
 
     context 'when the destination file does not exist' do
       it 'should copy the file to the local directory' do
-        @installer.copy_with_replacement 'fp', 'file'
+        @installer.copy_with_backup 'fp', 'file'
         File.exists?('file').should be_true
       end
     end
@@ -117,7 +117,7 @@ describe Railsthemes do
       end
 
       it 'should make a backup of existing file if it is present' do
-        @installer.copy_with_replacement 'fp', 'file'
+        @installer.copy_with_backup 'fp', 'file'
         File.exists?('file').should be_true
         File.exists?('file.old').should be_true
       end
@@ -158,6 +158,79 @@ describe Railsthemes do
     it 'should be false for other extensions' do
       @installer.archive?('test/a/b/c.tar/d.zip').should be_false
     end
+  end
+
+  describe 'end to end operation' do
+    def verify_end_to_end_operation
+      ['app/assets/images/image1.png',
+       'app/assets/images/bg/sprite.png',
+       'app/assets/javascripts/jquery.dataTables.js',
+       'app/assets/javascripts/scripts.js.erb',
+       'app/assets/stylesheets/style.css.erb',
+       'app/views/layouts/_interior_sidebar.html.html.erb',
+       'app/views/layouts/application.html.erb',
+       'app/views/layouts/homepage.html.erb'].each do |filename|
+         File.exist?(filename).should be_true, "#{filename} was not present"
+      end
+      File.open('app/assets/stylesheets/style.css.erb').each do |line|
+        line.should match /style.css.erb/
+      end
+    end
+
+    # see https://github.com/defunkt/fakefs/issues/121 for the reason for this
+    def stubby filepath
+      stub(@installer).files_under(filepath) {
+        ["app/assets/images/bg/sprite.png",
+         "app/assets/images/image1.png",
+         "app/assets/javascripts/jquery.dataTables.js",
+         "app/assets/javascripts/scripts.js.erb",
+         "app/assets/stylesheets/style.css.erb",
+         "app/views/layouts/_interior_sidebar.html.html.erb",
+         "app/views/layouts/application.html.erb",
+         "app/views/layouts/homepage.html.erb"]
+      }
+    end
+
+    before do
+      stub(@installer).ensure_in_rails_root
+      stub(@installer).post_copying_changes
+      FakeFS::FileSystem.clone('spec/fixtures')
+    end
+
+    def print_directory dir
+      Dir.entries(dir).each do |entry|
+        next if entry == '..' || entry == '.'
+        filename = File.join(dir, entry)
+        if File.directory?(filename)
+          print_directory filename
+        elsif File.file?(filename)
+          puts "file in print_directory: #{filename}"
+        end
+      end
+    end
+
+    it 'should extract correctly from directory' do
+      filename = 'spec/fixtures/blank-assets'
+      stubby filename
+      @installer.install '--file', filename
+      verify_end_to_end_operation
+    end
+
+    #it 'should extract correctly from archive file' do
+    #  filename = 'spec/fixtures/blank-assets.tar'
+    #  stubby /\/tmp/
+    #  @installer.install '--file', filename
+    #  print_directory('/tmp')
+    #  verify_end_to_end_operation
+    #end
+
+    #it 'should extract correctly from zipped archive file' do
+    #  filename = 'spec/fixtures/blank-assets.tar.gz'
+    #  stubby /\/tmp/
+    #  @installer.install '--file', filename
+    #  print_directory('/tmp')
+    #  verify_end_to_end_operation
+    #end
   end
 
   describe :download_from_hash
