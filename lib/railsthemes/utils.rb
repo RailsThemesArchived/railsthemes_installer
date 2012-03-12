@@ -17,7 +17,7 @@ module Railsthemes
       FileUtils.cp src, dest
     end
 
-    def self.download_file url, save_to
+    def self.download_file_to url, save_to
       File.open(save_to, "wb") do |saved_file|
         # the following "open" is provided by open-uri
         open(url) do |read_file|

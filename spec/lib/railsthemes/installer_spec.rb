@@ -6,6 +6,7 @@ describe Railsthemes::Installer do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
+    stub(@installer).generate_tempdir_name { '/tmp' }
   end
 
   describe :install_from_file_system do
@@ -72,8 +73,7 @@ describe Railsthemes::Installer do
 
   describe :install_from_archive do
     it 'should extract the archive correctly' do
-      stub(@installer).generate_tmpdir { 'tmp' }
-      mock(@installer).install_from_file_system 'tmp'
+      mock(@installer).install_from_file_system '/tmp'
       mock(@installer).untar_string('filepath', anything) { 'untar string' }
       mock(Railsthemes::Safe).system_call('untar string')
       @installer.install_from_archive 'filepath'
@@ -161,8 +161,38 @@ describe Railsthemes::Installer do
     #end
   end
 
-  describe :download_from_code do
+  describe :gems_to_use do
+    def using_gems *gems
+      File.open('Gemfile.lock', 'w') do |file|
+        file.puts <<-EOS
+GEM
+  remote: https://rubygems.org/
+  specs:
 
+EOS
+        gems.each do |gem|
+          file.puts "    #{gem}"
+        end
+      end
+    end
+
+    it 'should give haml, scss when haml is in the Gemfile' do
+      using_gems 'haml', 'sass'
+      @installer.gems_to_use.should =~ [:haml, :scss]
+    end
+
+    it 'should give erb, scss when haml is not in the gemfile' do
+      using_gems 'sass'
+      @installer.gems_to_use.should =~ [:erb, :scss]
+    end
   end
 
+  describe :download_from_code do
+    it 'should download the right file' do
+      mock(@installer).gems_to_use { [:haml, :scss] }
+      mock(Railsthemes::Utils).download_file_to('http://localhost:3001/download?code=panozzaj@gmail.com:code&config=haml,scss', '/tmp/archive.tar.gz')
+      mock(@installer).install_from_archive '/tmp/archive.tar.gz'
+      @installer.download_from_code 'panozzaj@gmail.com:code'
+    end
+  end
 end

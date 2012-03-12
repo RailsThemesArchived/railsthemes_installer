@@ -2,6 +2,8 @@ require 'date'
 require 'fileutils'
 require 'logger'
 require 'tmpdir'
+require 'bundler'
+
 
 # TODO:
 # check for source control system
@@ -50,23 +52,21 @@ module Railsthemes
     end
 
     def install_from_archive filepath
-      tempdir = generate_tmpdir
-      FileUtils.mkdir_p tempdir
-      Safe.system_call untar_string(filepath, tempdir)
-      install_from_file_system tempdir
-      FileUtils.rm_rf tempdir
+      with_tempdir do |tempdir|
+        Safe.system_call untar_string(filepath, tempdir)
+        install_from_file_system tempdir
+      end
     end
 
     def download_from_code code
       @logger.info "Downloading from code #{code}"
-      tempdir = generate_tmpdir + 'dl'
-      FileUtils.mkdir_p tempdir
-      archive = File.join(tempdir, 'archive.tar.gz')
-      Utils.download_file 'http://localhost:3001/download', archive
-      install_from_archive archive
-      FileUtils.rm_rf tempdir
+      with_tempdir do |tempdir|
+        archive = File.join(tempdir, 'archive.tar.gz')
+        config = gems_to_use
+        Utils.download_file_to "http://localhost:3001/download?code=#{code}&config=#{config*','}", archive
+        install_from_archive archive
+      end
     end
-
 
     def files_under filepath
       files = Dir.chdir(filepath) { Dir['**/*'] }
@@ -83,8 +83,15 @@ module Railsthemes
       Utils.copy_ensuring_directory_exists File.join(base_filepath, entry), entry
     end
 
-    def generate_tmpdir
-      File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%s"))
+    def with_tempdir &block
+      tempdir = generate_tempdir_name
+      FileUtils.mkdir_p tempdir
+      yield tempdir
+      FileUtils.rm_rf tempdir
+    end
+
+    def generate_tempdir_name
+      File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
     end
 
     def archive? filepath
@@ -95,6 +102,19 @@ module Railsthemes
       "tar -zxf #{filepath}"
     end
 
+
+    def gems_to_use
+      return [] unless File.exist?('Gemfile.lock')
+
+      # inspect Gemfile.lock
+      lockfile = Bundler::LockfileParser.new(Bundler.read_file("Gemfile.lock"))
+      gems = lockfile.specs.map(&:name)
+      if gems.include?('haml')
+        [:haml, :scss]
+      else
+        [:erb, :scss]
+      end
+    end
 
     # this happens after a successful copy so that we set up the environment correctly
     # for people to view the theme correctly
