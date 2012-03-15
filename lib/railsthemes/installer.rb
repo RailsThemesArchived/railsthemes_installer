@@ -3,6 +3,7 @@ require 'fileutils'
 require 'logger'
 require 'tmpdir'
 require 'bundler'
+require 'net/http'
 
 
 # TODO:
@@ -77,9 +78,16 @@ module Railsthemes
     end
 
     def get_download_url server_request_url
-      response = Net::HTTP.get_response URI.parse(server_request_url)
-      if response.code == '200'
-        response.body
+      response = nil
+      begin
+        response = Net::HTTP.get_response URI.parse(server_request_url)
+      rescue Exception => e
+        #@logger.info e.message
+        #@logger.info e.backtrace
+      end
+
+      if response && response.code == '200'
+        return response.body
       end
     end
 

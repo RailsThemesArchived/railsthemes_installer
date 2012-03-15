@@ -16,7 +16,6 @@ class Installer < Thor
     else
       code = code_or_file
       abort 'Please specify a code to install from' unless code
-      puts "Installing from code: #{code}."
       Railsthemes::Installer.new.download_from_code code
     end
   end
