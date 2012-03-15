@@ -9,5 +9,6 @@ group :test do
   gem 'rspec'
   gem 'rr'
   gem 'autotest'
-  gem "fakefs", :require => 'fakefs/safe'
+  gem 'fakefs', :require => 'fakefs/safe'
+  gem 'fakeweb'
 end

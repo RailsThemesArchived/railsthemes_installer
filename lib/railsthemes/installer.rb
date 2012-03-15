@@ -31,11 +31,11 @@ module Railsthemes
       if File.directory?(source_filepath)
         ensure_in_rails_root
         files = files_under(source_filepath)
-        @logger.info 'Copying assets...'
+        @logger.info 'Installing...'
         files.each do |file|
           copy_with_backup source_filepath, file
         end
-        @logger.info 'Done copying assets.'
+        @logger.info 'Done installing.'
         post_copying_changes
         print_post_installation_instructions
       elsif archive?(source_filepath)
@@ -52,19 +52,34 @@ module Railsthemes
     end
 
     def install_from_archive filepath
+      @logger.info "Extracting..."
       with_tempdir do |tempdir|
         Safe.system_call untar_string(filepath, tempdir)
+        @logger.info "Finished extracting."
         install_from_file_system tempdir
       end
     end
 
     def download_from_code code
-      @logger.info "Downloading from code #{code}"
+      @logger.info "Downloading..."
       with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')
-        config = gems_to_use
-        Utils.download_file_to "http://localhost:3001/download?code=#{code}&config=#{config*','}", archive
-        install_from_archive archive
+        config = gems_to_use # eventually just send Gemfile up
+        dl_url = get_download_url "http://localhost:3001/download?code=#{code}&config=#{config*','}"
+        if dl_url
+          Utils.download_file_to dl_url, archive
+          @logger.info "Finished downloading."
+          install_from_archive archive
+        else
+          Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code}).")
+        end
+      end
+    end
+
+    def get_download_url server_request_url
+      response = Net::HTTP.get_response URI.parse(server_request_url)
+      if response.code == '200'
+        response.body
       end
     end
 
