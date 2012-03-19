@@ -66,7 +66,7 @@ module Railsthemes
       with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')
         config = gems_to_use # eventually just send Gemfile up
-        dl_url = get_download_url "http://localhost:3001/download?code=#{code}&config=#{config*','}"
+        dl_url = get_download_url "http://railsthemes.dev/download?code=#{code}&config=#{config*','}"
         if dl_url
           Utils.download_file_to dl_url, archive
           @logger.info "Finished downloading."
@@ -128,6 +128,8 @@ module Railsthemes
 
     def gems_to_use
       return [] unless File.exist?('Gemfile.lock')
+
+      @logger.info 'Figuring out what gems you have installed...'
 
       # inspect Gemfile.lock
       lockfile = Bundler::LockfileParser.new(Bundler.read_file("Gemfile.lock"))
