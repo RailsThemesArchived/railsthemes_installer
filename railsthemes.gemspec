@@ -2,8 +2,8 @@
 require File.expand_path('../lib/railsthemes/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["railsthemes"]
-  gem.email         = ["panozzaj@gmail.com"]
+  gem.authors       = ["Railsthemes"]
+  gem.email         = ["anthony@railsthemes.com"]
   gem.description   = %q{railsthemes.com installer gem}
   gem.summary       = %q{Installs gems from railsthemes.com}
   gem.homepage      = "https://github.com/RailsThemes/railsthemes"
