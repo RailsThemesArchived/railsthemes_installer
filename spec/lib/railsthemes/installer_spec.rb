@@ -168,28 +168,22 @@ describe Railsthemes::Installer do
   end
 
   describe :gems_to_use do
-    def using_gems *gems
+    before do
+      FileUtils.mkdir('/tmp') # might be different on different platforms
       File.open('Gemfile.lock', 'w') do |file|
-        file.puts <<-EOS
-GEM
-  remote: https://rubygems.org/
-  specs:
-
-EOS
-        gems.each do |gem|
-          file.puts "    #{gem}"
-        end
+        file.puts "GEM\n  remote: https://rubygems.org/"
       end
     end
 
-    it 'should give haml, scss when haml is in the Gemfile' do
-      using_gems 'haml', 'sass'
-      @installer.gems_to_use.should =~ [:haml, :scss]
+    it 'should hit the server with the Gemfile and return the results, arrayified' do
+      params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
+      FakeWeb.register_uri :post, /gemfiles\/parse$/, :body => 'haml,scss', :parameters => params
+      @installer.gems_to_use('panozzaj@gmail.com:code').should =~ [:haml, :scss]
     end
 
-    it 'should give erb, scss when haml is not in the gemfile' do
-      using_gems 'sass'
-      @installer.gems_to_use.should =~ [:erb, :scss]
+    it 'should return a blank array when there are issues' do
+      FakeWeb.register_uri :post, /gemfiles\/parse$/, :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
+      @installer.gems_to_use('panozzaj@gmail.com:code').should == []
     end
   end
 
@@ -198,7 +192,7 @@ EOS
       it 'should download the file correctly' do
         FakeWeb.register_uri :get, /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
                              :body => 'auth_url'
-        mock(@installer).gems_to_use { [:haml, :scss] }
+        mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [:haml, :scss] }
         mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
         mock(@installer).install_from_archive '/tmp/archive.tar.gz'
         @installer.download_from_code 'panozzaj@gmail.com:code'
@@ -209,7 +203,7 @@ EOS
       it 'should fail with an error message' do
         FakeWeb.register_uri :get, /download\?code=panozzaj@gmail.com:code&config=/,
                              :body => '', :status => ['401', 'Unauthorized']
-        mock(@installer).gems_to_use { [] }
+        mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [] }
         mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
         @installer.download_from_code 'panozzaj@gmail.com:code'
       end
