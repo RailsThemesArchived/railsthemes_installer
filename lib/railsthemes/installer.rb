@@ -146,24 +146,37 @@ module Railsthemes
     def post_copying_changes
       Utils.remove_file File.join('public', 'index.html')
       @logger.info 'Analyzing existing project structure...'
-      create_welcome_controller unless routes_defined?
+      create_railsthemes_controller unless routes_defined?
     end
 
     def routes_defined?
       Safe.system_call('rake routes').length > 0
     end
 
-    def create_welcome_controller
-      Safe.system_call('rails g controller Welcome index')
+    def create_railsthemes_controller
+      File.open(File.join('app', 'controllers', 'railsthemes_controller.rb'), 'w') do |f|
+        f.write <<-EOS
+class RailsthemesController < ApplicationController
+  # normally every view will use your application layout
+  def inner
+    render :layout => 'application'
+  end
+
+  # this is a special layout
+  def landing
+    render :layout => 'landing'
+  end
+end
+        EOS
+      end
+
       lines = []
       if File.exists?('config/routes.rb')
-        File.open('config/routes.rb').each do |line|
-          if line =~ /  # root :to => 'welcome#index'/
-            lines << "  root :to => 'welcome#index'"
-          else
-            lines << line
-          end
-        end
+        lines = File.read('config/routes.rb').split("\n")
+        last = lines.pop
+        lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
+        lines << "  match 'railsthemes/inner' => 'railsthemes#inner'"
+        lines << last
         File.open('config/routes.rb', 'w') do |f|
           lines.each do |line|
             f.puts line
