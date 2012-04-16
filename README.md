@@ -4,15 +4,7 @@ This is a gem that helps you install a theme for your Rails app from RailsThemes
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem 'railsthemes'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
+Install using rubygems:
 
     $ gem install railsthemes
 
