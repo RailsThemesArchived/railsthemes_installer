@@ -187,7 +187,6 @@ What now?
     end
 
     def print_usage_and_abort s
-      print_usage
       Safe.log_and_abort s
     end
   end
