@@ -4,7 +4,7 @@ require 'railsthemes'
 describe Railsthemes::Installer do
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
-    @installer = Railsthemes::Installer.new @logger, 'SERVER'
+    @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
     stub(@installer).generate_tempdir_name { '/tmp' }
   end
@@ -175,14 +175,17 @@ describe Railsthemes::Installer do
     end
 
     it 'should hit the server with the Gemfile and return the results, arrayified' do
-      FakeFS.deactivate!
+      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
       params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
-      FakeWeb.register_uri :post, /gemfiles\/parse$/, :body => 'haml,scss', :parameters => params
+      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+        :body => 'haml,scss', :parameters => params
       @installer.gems_to_use('panozzaj@gmail.com:code').should =~ [:haml, :scss]
     end
 
     it 'should return a blank array when there are issues' do
-      FakeWeb.register_uri :post, /gemfiles\/parse$/, :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
+      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
+      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+        :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
       @installer.gems_to_use('panozzaj@gmail.com:code').should == []
     end
   end
@@ -190,8 +193,9 @@ describe Railsthemes::Installer do
   describe :download_from_code do
     context 'normal operation' do
       it 'should download the file correctly' do
-        FakeWeb.register_uri :get, /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
-                             :body => 'auth_url'
+        FakeWeb.register_uri :get,
+          /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
+          :body => 'auth_url'
         mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [:haml, :scss] }
         mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
         mock(@installer).install_from_archive '/tmp/archive.tar.gz'
@@ -201,8 +205,9 @@ describe Railsthemes::Installer do
 
     context 'any issue' do # invalid code, server error, etc.
       it 'should fail with an error message' do
-        FakeWeb.register_uri :get, /download\?code=panozzaj@gmail.com:code&config=/,
-                             :body => '', :status => ['401', 'Unauthorized']
+        FakeWeb.register_uri :get,
+          'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
+          :body => '', :status => ['401', 'Unauthorized']
         mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [] }
         mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
         @installer.download_from_code 'panozzaj@gmail.com:code'

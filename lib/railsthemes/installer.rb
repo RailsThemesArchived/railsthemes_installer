@@ -9,9 +9,9 @@ require 'rest-client'
 
 module Railsthemes
   class Installer
-    def initialize logger = nil, server = 'http://localhost:3003' #'http://railsthemes.com'
+    def initialize logger = nil
       @logger = logger
-      @server = server
+      @server = File.exist?('railsthemes_server') ? File.read('railsthemes_server') : 'https://railsthemes.com'
       @logger ||= Logger.new(STDOUT)
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
@@ -65,7 +65,7 @@ module Railsthemes
         archive = File.join(tempdir, 'archive.tar.gz')
         config = gems_to_use code
         if config
-          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config*','}"
+          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config * ','}"
           if dl_url
             Utils.download_file_to dl_url, archive
             @logger.info "Finished downloading."
@@ -101,8 +101,8 @@ module Railsthemes
         #response = Net::HTTP.new(url.host, url.port).start {|http| http.request(request) }
         #puts 'here!'
       rescue Exception => e
-        puts e.message
-        puts e.backtrace
+        #puts e.message
+        #puts e.backtrace
       end
 
       if response && response.code.to_s == '200'
