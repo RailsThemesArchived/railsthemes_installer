@@ -14,4 +14,7 @@ Gem::Specification.new do |gem|
   gem.name          = "railsthemes"
   gem.require_paths = ["lib"]
   gem.version       = Railsthemes::VERSION
+
+  gem.add_dependency "thor"
+  gem.add_dependency "rest-client"
 end

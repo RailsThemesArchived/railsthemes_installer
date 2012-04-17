@@ -3,6 +3,7 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in railsthemes.gemspec
 gemspec
 gem 'thor'
+gem 'rest-client'
 
 # development gems
 group :test do

@@ -1,14 +1,17 @@
+require 'rubygems'
 require 'date'
 require 'fileutils'
 require 'logger'
 require 'tmpdir'
 require 'bundler'
 require 'net/http'
+require 'rest-client'
 
 module Railsthemes
   class Installer
     def initialize logger = nil
       @logger = logger
+      @server = File.exist?('railsthemes_server') ? File.read('railsthemes_server') : 'https://railsthemes.com'
       @logger ||= Logger.new(STDOUT)
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
@@ -60,14 +63,18 @@ module Railsthemes
       @logger.info "Downloading..."
       with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')
-        config = gems_to_use # eventually just send Gemfile up
-        dl_url = get_download_url "http://railsthemes.dev/download?code=#{code}&config=#{config*','}"
-        if dl_url
-          Utils.download_file_to dl_url, archive
-          @logger.info "Finished downloading."
-          install_from_archive archive
+        config = gems_to_use code
+        if config
+          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config * ','}"
+          if dl_url
+            Utils.download_file_to dl_url, archive
+            @logger.info "Finished downloading."
+            install_from_archive archive
+          else
+            Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code})")
+          end
         else
-          Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code}).")
+          Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code}) or had trouble reading your Gemfile.lock file.")
         end
       end
     end
@@ -81,8 +88,27 @@ module Railsthemes
         #@logger.info e.backtrace
       end
 
-      if response && response.code == '200'
-        return response.body
+      response.body if response && response.code.to_s == '200'
+    end
+
+    def gems_to_use code
+      begin
+        response = RestClient.post("#{@server}/gemfiles/parse",
+          :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
+        #url = URI.parse("#{@server}/gemfiles/parse")
+        #request = Net::HTTP.Post.new url.path
+        #request.set_form_data({ :code => code, :gemfile_lock => File.read('Gemfile.lock') }, ';')
+        #response = Net::HTTP.new(url.host, url.port).start {|http| http.request(request) }
+        #puts 'here!'
+      rescue Exception => e
+        #puts e.message
+        #puts e.backtrace
+      end
+
+      if response && response.code.to_s == '200'
+        response.body.split(',').map(&:to_sym)
+      else
+        []
       end
     end
 
@@ -120,21 +146,6 @@ module Railsthemes
       "tar -zxf #{filepath}"
     end
 
-
-    def gems_to_use
-      return [] unless File.exist?('Gemfile.lock')
-
-      @logger.info 'Figuring out what gems you have installed...'
-
-      # inspect Gemfile.lock
-      lockfile = Bundler::LockfileParser.new(Bundler.read_file("Gemfile.lock"))
-      gems = lockfile.specs.map(&:name)
-      if gems.include?('haml')
-        [:haml, :scss]
-      else
-        [:erb, :scss]
-      end
-    end
 
     # this happens after a successful copy so that we set up the environment correctly
     # for people to view the theme correctly
