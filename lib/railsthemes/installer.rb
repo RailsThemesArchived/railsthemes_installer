@@ -7,10 +7,8 @@ require 'net/http'
 
 
 # TODO:
-# check for source control system
-# consider changing structure of installer to use separate classes to 
+# consider changing structure of installer to use separate classes to
 #    handle different installation types
-# 
 module Railsthemes
   class Installer
     def initialize logger = nil
@@ -31,6 +29,7 @@ module Railsthemes
     def install_from_file_system source_filepath
       if File.directory?(source_filepath)
         ensure_in_rails_root
+        check_vcs_status
         files = files_under(source_filepath)
         @logger.info 'Installing...'
         files.each do |file|
@@ -154,6 +153,7 @@ module Railsthemes
     end
 
     def create_railsthemes_controller
+      FileUtils.mkdir_p(File.join('app', 'controllers'))
       File.open(File.join('app', 'controllers', 'railsthemes_controller.rb'), 'w') do |f|
         f.write <<-EOS
 class RailsthemesController < ApplicationController
@@ -182,6 +182,24 @@ end
             f.puts line
           end
         end
+      end
+    end
+
+    def check_vcs_status
+      result = ''
+      variety = ''
+      if File.directory?('.git')
+        variety = 'Git'
+        result = Safe.system_call('git status -s')
+      elsif File.directory?('.hg')
+        variety = 'Mercurial'
+        result = Safe.system_call('hg status')
+      elsif File.directory?('.svn')
+        variety = 'Subversion'
+        result = Safe.system_call('svn status')
+      end
+      unless result.size == 0
+        Safe.log_and_abort("\n#{variety} reports that you have the following pending changes:\n#{result}Please stash or commit the changes before proceeding to ensure that you can roll back after installing if you want.")
       end
     end
 

@@ -43,6 +43,12 @@ describe Railsthemes::Installer do
         @installer.install_from_file_system("does not exist")
       end
     end
+
+    it 'should ensure the vcs changes are all committed' do
+      FileUtils.mkdir('filepath')
+      mock(@installer).check_vcs_status
+      @installer.install_from_file_system('filepath')
+    end
   end
 
   describe :copy_with_backup do
@@ -206,6 +212,59 @@ EOS
         mock(@installer).gems_to_use { [] }
         mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
         @installer.download_from_code 'panozzaj@gmail.com:code'
+      end
+    end
+  end
+
+  describe :check_vcs_status do
+    context 'when git used' do
+      before do
+        Dir.mkdir('.git')
+      end
+
+      it 'should exit when the vcs is unclean' do
+        mock(Railsthemes::Safe).system_call('git status -s') { '# modified: installer_spec.rb' }
+        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
+        @installer.check_vcs_status
+      end
+
+      it 'should do nothing significant when the vcs is clean' do
+        mock(Railsthemes::Safe).system_call('git status -s') { '' }
+        @installer.check_vcs_status
+      end
+    end
+
+    context 'when hg used' do
+      before do
+        Dir.mkdir('.hg')
+      end
+
+      it 'should exit when the vcs is unclean' do
+        mock(Railsthemes::Safe).system_call('hg status') { '? test.txt' }
+        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
+        @installer.check_vcs_status
+      end
+
+      it 'should do nothing significant when the vcs is clean' do
+        mock(Railsthemes::Safe).system_call('hg status') { '' }
+        @installer.check_vcs_status
+      end
+    end
+
+    context 'when subversion used' do
+      before do
+        Dir.mkdir('.svn')
+      end
+
+      it 'should exit when the vcs is unclean' do
+        mock(Railsthemes::Safe).system_call('svn status') { 'M something.txt' }
+        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
+        @installer.check_vcs_status
+      end
+
+      it 'should do nothing significant when the vcs is clean' do
+        mock(Railsthemes::Safe).system_call('svn status') { '' }
+        @installer.check_vcs_status
       end
     end
   end
