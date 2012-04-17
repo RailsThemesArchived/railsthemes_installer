@@ -5,10 +5,6 @@ require 'tmpdir'
 require 'bundler'
 require 'net/http'
 
-
-# TODO:
-# consider changing structure of installer to use separate classes to
-#    handle different installation types
 module Railsthemes
   class Installer
     def initialize logger = nil
@@ -145,11 +141,7 @@ module Railsthemes
     def post_copying_changes
       Utils.remove_file File.join('public', 'index.html')
       @logger.info 'Analyzing existing project structure...'
-      create_railsthemes_controller unless routes_defined?
-    end
-
-    def routes_defined?
-      Safe.system_call('rake routes').length > 0
+      create_railsthemes_controller
     end
 
     def create_railsthemes_controller
