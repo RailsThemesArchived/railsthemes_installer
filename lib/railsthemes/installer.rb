@@ -9,8 +9,9 @@ require 'rest-client'
 
 module Railsthemes
   class Installer
-    def initialize logger = nil
+    def initialize logger = nil, server = 'http://localhost:3003' #'http://railsthemes.com'
       @logger = logger
+      @server = server
       @logger ||= Logger.new(STDOUT)
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
@@ -64,7 +65,7 @@ module Railsthemes
         archive = File.join(tempdir, 'archive.tar.gz')
         config = gems_to_use code
         if config
-          dl_url = get_download_url "http://railsthemes.dev/download?code=#{code}&config=#{config*','}"
+          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config*','}"
           if dl_url
             Utils.download_file_to dl_url, archive
             @logger.info "Finished downloading."
@@ -92,16 +93,16 @@ module Railsthemes
 
     def gems_to_use code
       begin
-        response = RestClient.post('http://localhost:3001/gemfiles/parse',
+        response = RestClient.post("#{@server}/gemfiles/parse",
           :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
-        #url = URI.parse('http://railsthemes.dev/gemfiles/parse')
+        #url = URI.parse("#{@server}/gemfiles/parse")
         #request = Net::HTTP.Post.new url.path
         #request.set_form_data({ :code => code, :gemfile_lock => File.read('Gemfile.lock') }, ';')
         #response = Net::HTTP.new(url.host, url.port).start {|http| http.request(request) }
         #puts 'here!'
       rescue Exception => e
-        #puts e.message
-        #puts e.backtrace
+        puts e.message
+        puts e.backtrace
       end
 
       if response && response.code.to_s == '200'

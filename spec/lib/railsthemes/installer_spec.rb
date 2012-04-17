@@ -4,7 +4,7 @@ require 'railsthemes'
 describe Railsthemes::Installer do
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
-    @installer = Railsthemes::Installer.new @logger
+    @installer = Railsthemes::Installer.new @logger, 'SERVER'
     stub(@installer).ensure_in_rails_root
     stub(@installer).generate_tempdir_name { '/tmp' }
   end
