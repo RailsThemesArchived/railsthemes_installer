@@ -169,13 +169,13 @@ describe Railsthemes::Installer do
 
   describe :gems_to_use do
     before do
-      FileUtils.mkdir('/tmp') # might be different on different platforms
       File.open('Gemfile.lock', 'w') do |file|
         file.puts "GEM\n  remote: https://rubygems.org/"
       end
     end
 
     it 'should hit the server with the Gemfile and return the results, arrayified' do
+      FakeFS.deactivate!
       params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
       FakeWeb.register_uri :post, /gemfiles\/parse$/, :body => 'haml,scss', :parameters => params
       @installer.gems_to_use('panozzaj@gmail.com:code').should =~ [:haml, :scss]

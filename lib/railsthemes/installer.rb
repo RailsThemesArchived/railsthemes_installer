@@ -5,7 +5,6 @@ require 'logger'
 require 'tmpdir'
 require 'bundler'
 require 'net/http'
-require 'awesome_print'
 require 'rest-client'
 
 module Railsthemes
@@ -101,8 +100,8 @@ module Railsthemes
         #response = Net::HTTP.new(url.host, url.port).start {|http| http.request(request) }
         #puts 'here!'
       rescue Exception => e
-        puts e.message
-        puts e.backtrace
+        #puts e.message
+        #puts e.backtrace
       end
 
       if response && response.code.to_s == '200'
