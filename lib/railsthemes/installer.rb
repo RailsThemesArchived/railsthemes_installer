@@ -28,7 +28,6 @@ module Railsthemes
     def install_from_file_system source_filepath
       if File.directory?(source_filepath)
         ensure_in_rails_root
-        check_vcs_status
         files = files_under(source_filepath)
         @logger.info 'Installing...'
         files.each do |file|
@@ -60,6 +59,7 @@ module Railsthemes
     end
 
     def download_from_code code
+      check_vcs_status
       @logger.info "Downloading..."
       with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')

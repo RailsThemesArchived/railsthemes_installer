@@ -43,12 +43,6 @@ describe Railsthemes::Installer do
         @installer.install_from_file_system("does not exist")
       end
     end
-
-    it 'should ensure the vcs changes are all committed' do
-      FileUtils.mkdir('filepath')
-      mock(@installer).check_vcs_status
-      @installer.install_from_file_system('filepath')
-    end
   end
 
   describe :copy_with_backup do
@@ -198,6 +192,7 @@ describe Railsthemes::Installer do
           :body => 'auth_url'
         mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [:haml, :scss] }
         mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
+        mock(@installer).check_vcs_status
         mock(@installer).install_from_archive '/tmp/archive.tar.gz'
         @installer.download_from_code 'panozzaj@gmail.com:code'
       end
