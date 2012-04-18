@@ -212,11 +212,17 @@ end
 
 Yay! Your theme is installed!
 
+=============================
+
 What now?
 1) Ensure your new application layout file contains everything that you wanted
    from the old one.
-2) Restart your development server if it is currently running.
-3) Let us know how it went: @railsthemes or team@railsthemes.com.
+2) Restart your development server if it is currently running (the asset pipeline can
+   be finnicky.)
+3) Check out the samples at:
+   http://localhost:3000/railsthemes/landing
+   http://localhost:3000/railsthemes/inner
+4) Let us know how it went: @railsthemes or team@railsthemes.com
       EOS
     end
 
