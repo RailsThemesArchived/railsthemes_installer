@@ -12,14 +12,14 @@ describe Railsthemes::Installer do
   describe :install_from_file_system do
     context 'when the filepath is a directory' do
       it 'should copy the files from that directory into the Rails app' do
-        FileUtils.mkdir('filepath')
-        FileUtils.touch('filepath/a')
-        FileUtils.touch('filepath/b')
+        FileUtils.mkdir_p('../filepath/base')
+        FileUtils.touch('../filepath/base/a')
+        FileUtils.touch('../filepath/base/b')
         mock(@installer).post_copying_changes
 
-        mock(@installer).copy_with_backup('filepath', /a$/)
-        mock(@installer).copy_with_backup('filepath', /b$/)
-        @installer.install_from_file_system('filepath')
+        @installer.install_from_file_system('../filepath')
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
       end
     end
 
@@ -51,23 +51,9 @@ describe Railsthemes::Installer do
       FileUtils.touch 'fp/file'
     end
 
-    context 'when the destination file does not exist' do
-      it 'should copy the file to the local directory' do
-        @installer.copy_with_backup 'fp', 'file'
-        File.exists?('file').should be_true
-      end
-    end
-
-    context 'when the destination file exists' do
-      before do
-        FileUtils.touch 'file'
-      end
-
-      it 'should make a backup of existing file if it is present' do
-        @installer.copy_with_backup 'fp', 'file'
-        File.exists?('file').should be_true
-        File.exists?('file.old').should be_true
-      end
+    it 'should copy the file to the local directory' do
+      @installer.copy_with_backup 'fp', 'file'
+      File.exists?('file').should be_true
     end
   end
 
@@ -104,7 +90,7 @@ describe Railsthemes::Installer do
        'app/assets/javascripts/jquery.dataTables.js',
        'app/assets/javascripts/scripts.js.erb',
        'app/assets/stylesheets/style.css.erb',
-       'app/views/layouts/_interior_sidebar.html.html.erb',
+       'app/views/layouts/_interior_sidebar.html.erb',
        'app/views/layouts/application.html.erb',
        'app/views/layouts/homepage.html.erb'].each do |filename|
          File.exist?(filename).should be_true, "#{filename} was not present"
@@ -114,54 +100,24 @@ describe Railsthemes::Installer do
       end
     end
 
-    # see https://github.com/defunkt/fakefs/issues/121 for the reason for this
-    def stubby filepath
-      stub(@installer).files_under(filepath) {
-        ["app/assets/images/bg/sprite.png",
-         "app/assets/images/image1.png",
-         "app/assets/javascripts/jquery.dataTables.js",
-         "app/assets/javascripts/scripts.js.erb",
-         "app/assets/stylesheets/style.css.erb",
-         "app/views/layouts/_interior_sidebar.html.html.erb",
-         "app/views/layouts/application.html.erb",
-         "app/views/layouts/homepage.html.erb"]
-      }
-    end
-
     before do
       stub(@installer).post_copying_changes
       FakeFS::FileSystem.clone('spec/fixtures')
     end
 
-    def print_directory dir
-      Dir.entries(dir).each do |entry|
-        next if entry == '..' || entry == '.'
-        filename = File.join(dir, entry)
-        if File.directory?(filename)
-          print_directory filename
-        elsif File.file?(filename)
-          puts "file in print_directory: #{filename}"
-        end
-      end
-    end
-
     it 'should extract correctly from directory' do
       filename = 'spec/fixtures/blank-assets'
-      stubby filename
       @installer.install_from_file_system filename
       verify_end_to_end_operation
     end
 
-    #it 'should extract correctly from zipped archive file' do
-    #  filename = 'spec/fixtures/blank-assets.tar.gz'
-    #  stubby /\/tmp/
-    #  @installer.install '--file', filename
-    #  print_directory('/tmp')
-    #  verify_end_to_end_operation
-    #end
+    # TODO need to use a pure ruby solution to get this to mock in the file system right
+    it 'should extract correctly from archive' do
+      pending 'needs pure ruby untar solution'
+    end
   end
 
-  describe :gems_to_use do
+  describe :send_gemfile do
     before do
       File.open('Gemfile.lock', 'w') do |file|
         file.puts "GEM\n  remote: https://rubygems.org/"
@@ -173,40 +129,78 @@ describe Railsthemes::Installer do
       params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
       FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
         :body => 'haml,scss', :parameters => params
-      @installer.gems_to_use('panozzaj@gmail.com:code').should =~ [:haml, :scss]
+      @installer.send_gemfile('panozzaj@gmail.com:code')
     end
 
     it 'should return a blank array when there are issues' do
       FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
       FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
         :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
-      @installer.gems_to_use('panozzaj@gmail.com:code').should == []
+      @installer.send_gemfile('panozzaj@gmail.com:code')
     end
   end
 
   describe :download_from_code do
-    context 'normal operation' do
-      it 'should download the file correctly' do
-        FakeWeb.register_uri :get,
-          /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
-          :body => 'auth_url'
-        mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [:haml, :scss] }
-        mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
-        mock(@installer).check_vcs_status
-        mock(@installer).install_from_archive '/tmp/archive.tar.gz'
-        @installer.download_from_code 'panozzaj@gmail.com:code'
+    context 'when a gemfile.lock is not present' do
+      it 'should fail with a good message' do
+        mock(Railsthemes::Safe).log_and_abort(/could not find/)
+        @installer.download_from_code 'anything'
       end
     end
 
-    context 'any issue' do # invalid code, server error, etc.
-      it 'should fail with an error message' do
+    context 'when a gemfile.lock is present' do
+      before do
+        FileUtils.touch('Gemfile.lock')
+        mock(@installer).check_vcs_status
+        mock(@installer).send_gemfile('panozzaj@gmail.com:code')
+      end
+
+      it 'should download the file correctly when valid configuration' do
+        FakeWeb.register_uri :get,
+          /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
+          :body => 'auth_url'
+        mock(@installer).get_main_gems_to_use_for('') { 'haml,scss' }
+        mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
+        mock(@installer).install_from_archive '/tmp/archive.tar.gz'
+        @installer.download_from_code 'panozzaj@gmail.com:code'
+      end
+
+      it 'should fail with an error message on any error message' do
         FakeWeb.register_uri :get,
           'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
           :body => '', :status => ['401', 'Unauthorized']
-        mock(@installer).gems_to_use('panozzaj@gmail.com:code') { [] }
+        mock(@installer).get_main_gems_to_use_for('') { '' }
         mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
         @installer.download_from_code 'panozzaj@gmail.com:code'
       end
+    end
+  end
+
+  describe '#get_main_gems_to_use_for' do
+    def using_gems *gems
+      "GEM\nremote: https://rubygems.org/\nspecs:\n" +
+        gems.map{|gem| "    #{gem}"}.join("\n") +
+        "\nGEM\n  remote: https://rubygems.org/"
+    end
+
+    it 'should give haml+scss when haml and sass are in the Gemfile' do
+      gemfile = using_gems 'haml', 'sass'
+      @installer.get_main_gems_to_use_for(gemfile).should == 'haml,scss'
+    end
+
+    it 'should give haml+css when sass is not in the Gemfile' do
+      gemfile = using_gems 'haml'
+      @installer.get_main_gems_to_use_for(gemfile).should == 'haml,css'
+    end
+
+    it 'should give erb, scss when haml is not in the gemfile' do
+      gemfile = using_gems 'sass'
+      @installer.get_main_gems_to_use_for(gemfile).should == 'erb,scss'
+    end
+
+    it 'should give erb, scss when haml is not in the gemfile' do
+      gemfile = using_gems
+      @installer.get_main_gems_to_use_for(gemfile).should == 'erb,css'
     end
   end
 

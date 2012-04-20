@@ -28,11 +28,8 @@ module Railsthemes
     def install_from_file_system source_filepath
       if File.directory?(source_filepath)
         ensure_in_rails_root
-        files = files_under(source_filepath)
         @logger.info 'Installing...'
-        files.each do |file|
-          copy_with_backup source_filepath, file
-        end
+        FileUtils.cp_r(File.join(source_filepath, 'base', '.'), '.')
         @logger.info 'Done installing.'
         post_copying_changes
         print_post_installation_instructions
@@ -60,12 +57,13 @@ module Railsthemes
 
     def download_from_code code
       check_vcs_status
-      @logger.info "Downloading..."
-      with_tempdir do |tempdir|
-        archive = File.join(tempdir, 'archive.tar.gz')
-        config = gems_to_use code
-        if config
-          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config * ','}"
+      if File.exists?('Gemfile.lock')
+        @logger.info "Downloading..."
+        with_tempdir do |tempdir|
+          archive = File.join(tempdir, 'archive.tar.gz')
+          send_gemfile code
+          config = get_main_gems_to_use_for(File.read('Gemfile.lock'))
+          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config}"
           if dl_url
             Utils.download_file_to dl_url, archive
             @logger.info "Finished downloading."
@@ -73,9 +71,9 @@ module Railsthemes
           else
             Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code})")
           end
-        else
-          Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code}) or had trouble reading your Gemfile.lock file.")
         end
+      else
+        Safe.log_and_abort("We could not find your Gemfile.lock file.") unless File.exists?('Gemfile.lock')
       end
     end
 
@@ -91,39 +89,34 @@ module Railsthemes
       response.body if response && response.code.to_s == '200'
     end
 
-    def gems_to_use code
+    def get_main_gems_to_use_for contents
+      return [] if contents.strip == ''
+      lockfile = Bundler::LockfileParser.new(contents)
+      gems = lockfile.specs.map(&:name)
+      to_return = []
+      to_return << (gems.include?('haml') ? 'haml' : 'erb')
+      to_return << (gems.include?('sass') ? 'scss' : 'css')
+      to_return * ','
+    end
+
+    def get_secondary_gems_to_use_for contents
+      return [] if contents.strip == ''
+      lockfile = Bundler::LockfileParser.new(contents)
+      gems = lockfile.specs.map(&:name) - ['haml', 'sass']
+    end
+
+    def send_gemfile code
       begin
         response = RestClient.post("#{@server}/gemfiles/parse",
           :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
-        #url = URI.parse("#{@server}/gemfiles/parse")
-        #request = Net::HTTP.Post.new url.path
-        #request.set_form_data({ :code => code, :gemfile_lock => File.read('Gemfile.lock') }, ';')
-        #response = Net::HTTP.new(url.host, url.port).start {|http| http.request(request) }
-        #puts 'here!'
       rescue Exception => e
-        #puts e.message
-        #puts e.backtrace
+        #@logger.info e.message
+        #@logger.info e.backtrace
       end
-
-      if response && response.code.to_s == '200'
-        response.body.split(',').map(&:to_sym)
-      else
-        []
-      end
-    end
-
-    def files_under filepath
-      files = Dir.chdir(filepath) { Dir['**/*'] }
-      files.select{|f| !File.directory?(File.join(filepath, f))}
     end
 
     # to be replaced with Thor copy
     def copy_with_backup base_filepath, entry
-      if File.exists?(entry)
-        # not sure if I should put in a cp -f here, might be better to toss error
-        # so I'm using rename instead
-        File.rename entry, "#{entry}.old"
-      end
       Utils.copy_ensuring_directory_exists File.join(base_filepath, entry), entry
     end
 
@@ -205,7 +198,6 @@ end
         Safe.log_and_abort("\n#{variety} reports that you have the following pending changes:\n#{result}Please stash or commit the changes before proceeding to ensure that you can roll back after installing if you want.")
       end
     end
-
 
     def print_post_installation_instructions
       @logger.info <<-EOS
