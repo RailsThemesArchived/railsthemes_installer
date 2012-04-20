@@ -28,8 +28,12 @@ module Railsthemes
     def install_from_file_system source_filepath
       if File.directory?(source_filepath)
         ensure_in_rails_root
+
         @logger.info 'Installing...'
         FileUtils.cp_r(File.join(source_filepath, 'base', '.'), '.')
+        gemfile_contents = File.read('Gemfile.lock')
+        install_gems_from(source_filepath, gems_used(File.read('Gemfile.lock')) - ['haml', 'sass'])
+
         @logger.info 'Done installing.'
         post_copying_changes
         print_post_installation_instructions
@@ -43,6 +47,13 @@ module Railsthemes
         end
       else
         print_usage_and_abort 'Need to specify either a directory or an archive file when --file is used.'
+      end
+    end
+
+    def install_gems_from source_filepath, gem_names
+      gems_that_we_can_install = Dir.entries("#{source_filepath}/gems").reject{|x| x == '.' || x == '..'}
+      (gem_names & gems_that_we_can_install).each do |gem_name|
+        FileUtils.cp_r(File.join(source_filepath, 'gems', gem_name, '.'), '.')
       end
     end
 
@@ -62,7 +73,7 @@ module Railsthemes
         with_tempdir do |tempdir|
           archive = File.join(tempdir, 'archive.tar.gz')
           send_gemfile code
-          config = get_main_gems_to_use_for(File.read('Gemfile.lock'))
+          config = get_primary_configuration(File.read('Gemfile.lock'))
           dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config}"
           if dl_url
             Utils.download_file_to dl_url, archive
@@ -89,20 +100,22 @@ module Railsthemes
       response.body if response && response.code.to_s == '200'
     end
 
-    def get_main_gems_to_use_for contents
+    def gems_used
+      gems_used File.read('Gemfile.lock')
+    end
+
+    def gems_used contents
       return [] if contents.strip == ''
       lockfile = Bundler::LockfileParser.new(contents)
-      gems = lockfile.specs.map(&:name)
+      lockfile.specs.map(&:name)
+    end
+
+    def get_primary_configuration contents
+      gems = gems_used(contents)
       to_return = []
       to_return << (gems.include?('haml') ? 'haml' : 'erb')
       to_return << (gems.include?('sass') ? 'scss' : 'css')
       to_return * ','
-    end
-
-    def get_secondary_gems_to_use_for contents
-      return [] if contents.strip == ''
-      lockfile = Bundler::LockfileParser.new(contents)
-      gems = lockfile.specs.map(&:name) - ['haml', 'sass']
     end
 
     def send_gemfile code
@@ -113,11 +126,6 @@ module Railsthemes
         #@logger.info e.message
         #@logger.info e.backtrace
       end
-    end
-
-    # to be replaced with Thor copy
-    def copy_with_backup base_filepath, entry
-      Utils.copy_ensuring_directory_exists File.join(base_filepath, entry), entry
     end
 
     def with_tempdir &block

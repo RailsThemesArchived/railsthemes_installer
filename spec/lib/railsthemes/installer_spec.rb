@@ -2,22 +2,30 @@ require 'spec_helper'
 require 'railsthemes'
 
 describe Railsthemes::Installer do
+  def using_gems *gems
+    "GEM\nremote: https://rubygems.org/\nspecs:\n" +
+      gems.map{|gem| "    #{gem}"}.join("\n") +
+      "\nGEM\n  remote: https://rubygems.org/"
+  end
+
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
     stub(@installer).generate_tempdir_name { '/tmp' }
+    FileUtils.touch('Gemfile.lock')
   end
 
   describe :install_from_file_system do
     context 'when the filepath is a directory' do
       it 'should copy the files from that directory into the Rails app' do
-        FileUtils.mkdir_p('../filepath/base')
-        FileUtils.touch('../filepath/base/a')
-        FileUtils.touch('../filepath/base/b')
+        FileUtils.mkdir_p('filepath/base')
+        FileUtils.touch('filepath/base/a')
+        FileUtils.touch('filepath/base/b')
+        FileUtils.mkdir_p('filepath/gems')
         mock(@installer).post_copying_changes
 
-        @installer.install_from_file_system('../filepath')
+        @installer.install_from_file_system('filepath')
         File.exists?('a').should be_true
         File.exists?('b').should be_true
       end
@@ -45,15 +53,13 @@ describe Railsthemes::Installer do
     end
   end
 
-  describe :copy_with_backup do
-    before do
-      FileUtils.mkdir 'fp'
-      FileUtils.touch 'fp/file'
-    end
-
-    it 'should copy the file to the local directory' do
-      @installer.copy_with_backup 'fp', 'file'
-      File.exists?('file').should be_true
+  describe :install_gems_from do
+    it 'should install the gems that we specify that match' do
+      FakeFS::FileSystem.clone('spec/fixtures')
+      @installer.install_gems_from("spec/fixtures/blank-assets", ['formtastic', 'kaminari'])
+      File.exist?(File.join('app', 'assets', 'stylesheets', 'formtastic.css.scss')).should be_true
+      File.exist?(File.join('app', 'assets', 'stylesheets', 'kaminari.css.scss')).should be_false
+      File.exist?(File.join('app', 'assets', 'stylesheets', 'simple_form.css.scss')).should be_false
     end
   end
 
@@ -143,6 +149,7 @@ describe Railsthemes::Installer do
   describe :download_from_code do
     context 'when a gemfile.lock is not present' do
       it 'should fail with a good message' do
+        File.unlink('Gemfile.lock')
         mock(Railsthemes::Safe).log_and_abort(/could not find/)
         @installer.download_from_code 'anything'
       end
@@ -150,7 +157,6 @@ describe Railsthemes::Installer do
 
     context 'when a gemfile.lock is present' do
       before do
-        FileUtils.touch('Gemfile.lock')
         mock(@installer).check_vcs_status
         mock(@installer).send_gemfile('panozzaj@gmail.com:code')
       end
@@ -159,7 +165,7 @@ describe Railsthemes::Installer do
         FakeWeb.register_uri :get,
           /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
           :body => 'auth_url'
-        mock(@installer).get_main_gems_to_use_for('') { 'haml,scss' }
+        mock(@installer).get_primary_configuration('') { 'haml,scss' }
         mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
         mock(@installer).install_from_archive '/tmp/archive.tar.gz'
         @installer.download_from_code 'panozzaj@gmail.com:code'
@@ -169,38 +175,32 @@ describe Railsthemes::Installer do
         FakeWeb.register_uri :get,
           'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
           :body => '', :status => ['401', 'Unauthorized']
-        mock(@installer).get_main_gems_to_use_for('') { '' }
+        mock(@installer).get_primary_configuration('') { '' }
         mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
         @installer.download_from_code 'panozzaj@gmail.com:code'
       end
     end
   end
 
-  describe '#get_main_gems_to_use_for' do
-    def using_gems *gems
-      "GEM\nremote: https://rubygems.org/\nspecs:\n" +
-        gems.map{|gem| "    #{gem}"}.join("\n") +
-        "\nGEM\n  remote: https://rubygems.org/"
-    end
-
+  describe '#get_primary_configuration' do
     it 'should give haml+scss when haml and sass are in the Gemfile' do
       gemfile = using_gems 'haml', 'sass'
-      @installer.get_main_gems_to_use_for(gemfile).should == 'haml,scss'
+      @installer.get_primary_configuration(gemfile).should == 'haml,scss'
     end
 
     it 'should give haml+css when sass is not in the Gemfile' do
       gemfile = using_gems 'haml'
-      @installer.get_main_gems_to_use_for(gemfile).should == 'haml,css'
+      @installer.get_primary_configuration(gemfile).should == 'haml,css'
     end
 
     it 'should give erb, scss when haml is not in the gemfile' do
       gemfile = using_gems 'sass'
-      @installer.get_main_gems_to_use_for(gemfile).should == 'erb,scss'
+      @installer.get_primary_configuration(gemfile).should == 'erb,scss'
     end
 
     it 'should give erb, scss when haml is not in the gemfile' do
       gemfile = using_gems
-      @installer.get_main_gems_to_use_for(gemfile).should == 'erb,css'
+      @installer.get_primary_configuration(gemfile).should == 'erb,css'
     end
   end
 
