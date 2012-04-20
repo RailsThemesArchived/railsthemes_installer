@@ -20,6 +20,20 @@ This has been tested with Ruby 1.8.7, and should work with higher versions. 1.8.
 
 Not sure if this will work for Windows users due to invoking tar on the command-line instead of using native Ruby. This is something that we can change going forward, just a matter of time.
 
+## Developer notes
+
+To cut a release, the process I've been using is:
+
+    installer> gem build railsthemes.gemspec
+      Successfully built RubyGem
+      Name: railsthemes
+      Version: 1.0.0
+      File: railsthemes-1.0.0.gem
+
+    installer> gem push railsthemes-1.0.0.gem
+    Pushing gem to https://rubygems.org...
+    Successfully registered gem: railsthemes (1.0.0)
+
 ## Contributing
 
 1. Fork it
