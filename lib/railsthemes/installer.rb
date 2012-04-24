@@ -11,7 +11,10 @@ module Railsthemes
   class Installer
     def initialize logger = nil
       @logger = logger
-      @server = File.exist?('railsthemes_server') ? File.read('railsthemes_server') : 'https://railsthemes.com'
+      @server = 'https://railsthemes.com'
+      if File.exist?('railsthemes_server')
+        @server = File.read('railsthemes_server').gsub("\n", '')
+      end
       @logger ||= Logger.new(STDOUT)
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
@@ -91,13 +94,28 @@ module Railsthemes
     def get_download_url server_request_url
       response = nil
       begin
-        response = Net::HTTP.get_response URI.parse(server_request_url)
+        url = URI.parse(server_request_url)
+        http = Net::HTTP.new url.host, url.port
+        http = Net::HTTP.new url.host, url.port
+        if server_request_url =~ /^https/
+          http.use_ssl = true
+          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        end
+        path = server_request_url.gsub(%r{https?://[^/]+}, '')
+        response = http.request_get(path)
       rescue Exception => e
         #@logger.info e.message
         #@logger.info e.backtrace
       end
 
-      response.body if response && response.code.to_s == '200'
+      if response
+        if response.code.to_s == '200'
+          return response.body
+        else
+          @logger.info "Got a #{response.code} error while trying to download."
+          return nil
+        end
+      end
     end
 
     def gems_used
@@ -144,7 +162,7 @@ module Railsthemes
     end
 
     def untar_string filepath, newdirpath
-      "tar -zxf #{filepath}"
+      "tar -zxf #{filepath} -C #{newdirpath}"
     end
 
 

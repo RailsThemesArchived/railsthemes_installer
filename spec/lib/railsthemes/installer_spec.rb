@@ -75,7 +75,7 @@ describe Railsthemes::Installer do
   describe :untar_string do
     it 'should return correct value for *.tar.gz file' do
       result = @installer.untar_string 'file.tar.gz', 'newdirpath'
-      result.should == 'tar -zxf file.tar.gz'
+      result.should == 'tar -zxf file.tar.gz -C newdirpath'
     end
   end
 
@@ -183,22 +183,22 @@ describe Railsthemes::Installer do
   end
 
   describe '#get_primary_configuration' do
-    it 'should give haml+scss when haml and sass are in the Gemfile' do
+    it 'should give haml,scss when haml and sass are in the Gemfile' do
       gemfile = using_gems 'haml', 'sass'
       @installer.get_primary_configuration(gemfile).should == 'haml,scss'
     end
 
-    it 'should give haml+css when sass is not in the Gemfile' do
+    it 'should give haml,css when sass is not in the Gemfile but haml is' do
       gemfile = using_gems 'haml'
       @installer.get_primary_configuration(gemfile).should == 'haml,css'
     end
 
-    it 'should give erb, scss when haml is not in the gemfile' do
+    it 'should give erb,scss when haml is not in the gemfile but sass is' do
       gemfile = using_gems 'sass'
       @installer.get_primary_configuration(gemfile).should == 'erb,scss'
     end
 
-    it 'should give erb, scss when haml is not in the gemfile' do
+    it 'should give erb,css when haml and sass are not in the gemfile' do
       gemfile = using_gems
       @installer.get_primary_configuration(gemfile).should == 'erb,css'
     end
