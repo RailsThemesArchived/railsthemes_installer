@@ -104,14 +104,15 @@ module Railsthemes
         path = server_request_url.gsub(%r{https?://[^/]+}, '')
         response = http.request_get(path)
       rescue Exception => e
-        #@logger.info e.message
-        #@logger.info e.backtrace
+        @logger.info e.message
+        @logger.info e.backtrace
       end
 
       if response
         if response.code.to_s == '200'
           return response.body
         else
+          @logger.info response
           @logger.info "Got a #{response.code} error while trying to download."
           return nil
         end
@@ -141,8 +142,8 @@ module Railsthemes
         response = RestClient.post("#{@server}/gemfiles/parse",
           :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
       rescue Exception => e
-        #@logger.info e.message
-        #@logger.info e.backtrace
+        @logger.info e.message
+        @logger.info e.backtrace
       end
     end
 
