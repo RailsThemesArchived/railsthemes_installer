@@ -24,15 +24,7 @@ Not sure if this will work for Windows users due to invoking tar on the command-
 
 To cut a release, the process I've been using is:
 
-    installer> gem build railsthemes.gemspec
-      Successfully built RubyGem
-      Name: railsthemes
-      Version: 1.0.0
-      File: railsthemes-1.0.0.gem
-
-    installer> gem push railsthemes-1.0.0.gem
-    Pushing gem to https://rubygems.org...
-    Successfully registered gem: railsthemes (1.0.0)
+    installer> ./bump-version VERSION
 
 ## Contributing
 
