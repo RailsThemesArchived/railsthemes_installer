@@ -20,6 +20,11 @@ class Installer < Thor
     end
   end
 
+  desc "version", "See what version you have installed"
+  def version
+    puts Railsthemes::VERSION
+  end
+
   # AP: other options could include list, remove, help, etc.
 end
 
