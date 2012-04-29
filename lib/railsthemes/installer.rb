@@ -185,7 +185,7 @@ class RailsthemesController < ApplicationController
     render :layout => 'application'
   end
 
-  # this is a special layout
+  # this is a special layout for landing and home pages
   def landing
     render :layout => 'landing'
   end
@@ -234,14 +234,15 @@ Yay! Your theme is installed!
 =============================
 
 What now?
-1) Ensure your new application layout file contains everything that you wanted
+1) Remove or comment out your old stylesheets, as these may conflict with the new theme
+2) Ensure your new application layout file contains everything that you wanted
    from the old one.
-2) Restart your development server if it is currently running (the asset pipeline can
+3) Restart your development server if it is currently running (the asset pipeline can
    be finnicky.)
-3) Check out the samples at:
+4) Check out the samples at:
    http://localhost:3000/railsthemes/landing
    http://localhost:3000/railsthemes/inner
-4) Let us know how it went: @railsthemes or team@railsthemes.com
+5) Let us know how it went: @railsthemes or support@railsthemes.com
       EOS
     end
 
