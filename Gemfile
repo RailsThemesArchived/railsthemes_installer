@@ -5,6 +5,10 @@ gemspec
 gem 'thor'
 gem 'rest-client'
 
+group :development do
+  gem 'gem-release'
+end
+
 # development gems
 group :test do
   gem 'rspec'
