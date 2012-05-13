@@ -96,7 +96,6 @@ module Railsthemes
       begin
         url = URI.parse(server_request_url)
         http = Net::HTTP.new url.host, url.port
-        http = Net::HTTP.new url.host, url.port
         if server_request_url =~ /^https/
           http.use_ssl = true
           http.verify_mode = OpenSSL::SSL::VERIFY_PEER
