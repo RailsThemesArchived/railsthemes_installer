@@ -198,6 +198,7 @@ end
         last = lines.pop
         lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
         lines << "  match 'railsthemes/inner' => 'railsthemes#inner'"
+        lines << "  match 'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'"
         lines << last
         File.open('config/routes.rb', 'w') do |f|
           lines.each do |line|
