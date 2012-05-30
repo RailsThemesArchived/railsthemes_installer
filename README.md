@@ -22,9 +22,11 @@ Not sure if this will work for Windows users due to invoking tar on the command-
 
 ## Developer notes
 
-To cut a release, the process I've been using is:
+To cut a release, I've been using the gem-release gem:
 
-    installer> ./bump-version VERSION
+    installer> gem bump --version patch --tag --release
+
+Changing patch to minor or major as useful. For more thorough documentation, see [gem-release](https://github.com/svenfuchs/gem-release).
 
 ## Contributing
 
