@@ -20,11 +20,19 @@ This has been tested with Ruby 1.8.7, and should work with higher versions. 1.8.
 
 Not sure if this will work for Windows users due to invoking tar on the command-line instead of using native Ruby. This is something that we can change going forward, just a matter of time.
 
-## Developer notes
+## Committer notes
 
-To cut a release, I've been using the gem-release gem:
+To cut a release, use the gem-release gem:
 
-    installer> gem bump --version patch --tag --release
+    installer> gem bump --version patch
+
+    Inspect the commit created. This is the last chance before pushing to the repo.
+
+    installer> gem tag
+
+    Inspect the tag created, if you wish.
+
+    installer> gem release
 
 Changing patch to minor or major as useful. For more thorough documentation, see [gem-release](https://github.com/svenfuchs/gem-release).
 
