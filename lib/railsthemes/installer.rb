@@ -33,6 +33,11 @@ module Railsthemes
         ensure_in_rails_root
 
         @logger.info 'Installing...'
+
+        # this file causes issues when HAML is also present, and we overwrite
+        # it in the ERB case, so safe to delete here
+        Utils.remove_file('app/views/layouts/application.html.erb')
+
         FileUtils.cp_r(File.join(source_filepath, 'base', '.'), '.')
         gemfile_contents = File.read('Gemfile.lock')
         install_gems_from(source_filepath, gems_used(File.read('Gemfile.lock')) - ['haml', 'sass'])
