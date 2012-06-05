@@ -247,7 +247,9 @@ What now?
 4) Check out the samples at:
    http://localhost:3000/railsthemes/landing
    http://localhost:3000/railsthemes/inner
-5) Let us know how it went: @railsthemes or support@railsthemes.com
+   http://localhost:3000/railsthemes/jquery_ui
+5) There are some help articles for your perusal at support.railsthemes.com.
+6) Let us know how it went: @railsthemes or support@railsthemes.com
       EOS
     end
 
