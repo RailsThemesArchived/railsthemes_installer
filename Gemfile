@@ -7,6 +7,8 @@ gem 'rest-client'
 
 group :development do
   gem 'gem-release'
+  gem 'guard'
+  gem 'guard-rspec'
 end
 
 # development gems
