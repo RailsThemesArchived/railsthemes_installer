@@ -8,6 +8,14 @@ describe Railsthemes::Installer do
       "\nGEM\n  remote: https://rubygems.org/"
   end
 
+  def using_gem_specs specs = {}
+    lines = []
+    specs.each { |name, version| lines << "    #{name} (#{version})"}
+    "GEM\nremote: https://rubygems.org/\nspecs:\n" +
+      lines.join("\n") +
+      "\nGEM\n  remote: https://rubygems.org/"
+  end
+
   before do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
@@ -146,18 +154,52 @@ describe Railsthemes::Installer do
     end
   end
 
-  describe :download_from_code do
-    context 'when a gemfile.lock is not present' do
-      it 'should fail with a good message' do
-        File.unlink('Gemfile.lock')
-        mock(Railsthemes::Safe).log_and_abort(/could not find/)
-        @installer.download_from_code 'anything'
-      end
+  describe :ask_to_install_unsupported do
+    it 'should abort if the user does not want to continue' do
+      mock(Railsthemes::Safe).yes?(/wish to install/) { false }
+      mock(Railsthemes::Safe).log_and_abort('Halting.')
+      @installer.ask_to_install_unsupported 'code'
     end
 
+    it 'should continue if the user wants to continue' do
+      mock(Railsthemes::Safe).yes?(/wish to install/) { true }
+      mock(@installer).install_from_server('code')
+      @installer.ask_to_install_unsupported 'code'
+    end
+  end
+
+  describe :download_from_code do
+    it 'should abort if the VCS is not clean' do
+      mock(@installer).check_vcs_status { 'msg' }
+      mock(Railsthemes::Safe).log_and_abort('msg')
+      @installer.download_from_code 'thecode'
+    end
+
+    it 'should ask the user if they still want to install when a Gemfile.lock is not present' do
+      File.unlink('Gemfile.lock')
+      mock(@installer).check_vcs_status { nil }
+      mock(@installer).ask_to_install_unsupported 'thecode'
+      @installer.download_from_code 'thecode'
+    end
+
+    it 'should ask the user if they still want to install when the rails version is < 3.1' do
+      mock(@installer).check_vcs_status { nil }
+      mock(@installer).rails_version { Gem::Version.new('3.0.9') }
+      mock(@installer).ask_to_install_unsupported 'thecode'
+      @installer.download_from_code 'thecode'
+    end
+
+    it 'should install from the server otherwise' do
+      mock(@installer).check_vcs_status { nil }
+      mock(@installer).rails_version { Gem::Version.new('3.1.0') }
+      mock(@installer).install_from_server 'thecode'
+      @installer.download_from_code 'thecode'
+    end
+  end
+
+  describe '#install_from_server' do
     context 'when a gemfile.lock is present' do
       before do
-        mock(@installer).check_vcs_status
         mock(@installer).send_gemfile('panozzaj@gmail.com:code')
       end
 
@@ -168,7 +210,7 @@ describe Railsthemes::Installer do
         mock(@installer).get_primary_configuration('') { 'haml,scss' }
         mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
         mock(@installer).install_from_archive '/tmp/archive.tar.gz'
-        @installer.download_from_code 'panozzaj@gmail.com:code'
+        @installer.install_from_server 'panozzaj@gmail.com:code'
       end
 
       it 'should fail with an error message on any error message' do
@@ -177,12 +219,16 @@ describe Railsthemes::Installer do
           :body => '', :status => ['401', 'Unauthorized']
         mock(@installer).get_primary_configuration('') { '' }
         mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
-        @installer.download_from_code 'panozzaj@gmail.com:code'
+        @installer.install_from_server 'panozzaj@gmail.com:code'
       end
     end
   end
 
   describe '#get_primary_configuration' do
+    it 'should give erb,css when there is no Gemfile' do
+      @installer.get_primary_configuration('').should == 'erb,css'
+    end
+
     it 'should give haml,scss when haml and sass are in the Gemfile' do
       gemfile = using_gems 'haml', 'sass'
       @installer.get_primary_configuration(gemfile).should == 'haml,scss'
@@ -205,54 +251,61 @@ describe Railsthemes::Installer do
   end
 
   describe :check_vcs_status do
-    context 'when git used' do
+    context 'when Git used' do
       before do
         Dir.mkdir('.git')
       end
 
-      it 'should exit when the vcs is unclean' do
+      it 'should return false, issues when the vcs is unclean' do
         mock(Railsthemes::Safe).system_call('git status -s') { '# modified: installer_spec.rb' }
-        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
-        @installer.check_vcs_status
+        result = @installer.check_vcs_status
+        result.should match /Git reports/
+        result.should match /# modified: installer_spec\.rb/
+        result.should match /roll back or commit/
       end
 
       it 'should do nothing significant when the vcs is clean' do
         mock(Railsthemes::Safe).system_call('git status -s') { '' }
-        @installer.check_vcs_status
+        @installer.check_vcs_status.should be_nil
       end
     end
 
-    context 'when hg used' do
+    context 'when Mercurial used' do
       before do
         Dir.mkdir('.hg')
       end
 
       it 'should exit when the vcs is unclean' do
         mock(Railsthemes::Safe).system_call('hg status') { '? test.txt' }
-        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
-        @installer.check_vcs_status
+        result = @installer.check_vcs_status
+        result.should_not be_nil
+        result.should match /Mercurial reports/
+        result.should match /\? test\.txt/
+        result.should match /roll back or commit/
       end
 
       it 'should do nothing significant when the vcs is clean' do
         mock(Railsthemes::Safe).system_call('hg status') { '' }
-        @installer.check_vcs_status
+        @installer.check_vcs_status.should be_nil
       end
     end
 
-    context 'when subversion used' do
+    context 'when Subversion used' do
       before do
         Dir.mkdir('.svn')
       end
 
       it 'should exit when the vcs is unclean' do
         mock(Railsthemes::Safe).system_call('svn status') { 'M something.txt' }
-        mock(Railsthemes::Safe).log_and_abort(/pending changes/)
-        @installer.check_vcs_status
+        result = @installer.check_vcs_status
+        result.should match /Subversion reports/
+        result.should match /M something\.txt/
+        result.should match /roll back or commit/
       end
 
       it 'should do nothing significant when the vcs is clean' do
         mock(Railsthemes::Safe).system_call('svn status') { '' }
-        @installer.check_vcs_status
+        @installer.check_vcs_status.should be_nil
       end
     end
   end
@@ -274,7 +327,6 @@ end
     it 'should create a RailsThemes controller' do
       @installer.create_railsthemes_demo_pages
       controller = File.join('app', 'controllers', 'railsthemes_controller.rb')
-      File.exists?(controller).should be_true
       lines = File.read(controller).split("\n")
       lines.count.should == 11
       lines.first.should match /class RailsthemesController < ApplicationController/
@@ -283,7 +335,6 @@ end
     it 'should insert lines into the routes file' do
       @installer.create_railsthemes_demo_pages
       routes_file = File.join('config', 'routes.rb')
-      File.exists?(routes_file).should be_true
       lines = File.read(routes_file).split("\n")
       lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
       lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
@@ -294,11 +345,22 @@ end
       @installer.create_railsthemes_demo_pages
       @installer.create_railsthemes_demo_pages
       routes_file = File.join('config', 'routes.rb')
-      File.exists?(routes_file).should be_true
       lines = File.read(routes_file).split("\n")
       lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
       lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
       lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
+    end
+  end
+
+  describe '#rails_version' do
+    it 'should return the right version' do
+      gemfile = using_gem_specs :rails => '3.0.1'
+      @installer.rails_version(gemfile).version.should == '3.0.1'
+    end
+
+    it 'should return nil if there is no rails present' do
+      gemfile = using_gem_specs
+      @installer.rails_version(gemfile).should be_nil
     end
   end
 end

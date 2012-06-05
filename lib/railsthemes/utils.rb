@@ -17,6 +17,10 @@ module Railsthemes
       FileUtils.cp src, dest
     end
 
+    def self.read_file filepath
+      File.exists?(filepath) ? File.read(filepath) : ''
+    end
+
     # would be nice to put download status in the output (speed, progress, etc.)
     def self.download_file_to url, save_to
       File.open(save_to, "wb") do |saved_file|

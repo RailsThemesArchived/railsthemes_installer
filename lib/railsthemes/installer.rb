@@ -39,8 +39,8 @@ module Railsthemes
         Utils.remove_file('app/views/layouts/application.html.erb')
 
         FileUtils.cp_r(File.join(source_filepath, 'base', '.'), '.')
-        gemfile_contents = File.read('Gemfile.lock')
-        install_gems_from(source_filepath, gems_used(File.read('Gemfile.lock')) - ['haml', 'sass'])
+        gem_names = gemspecs(Utils.read_file('Gemfile.lock')).map(&:name) - ['haml', 'sass']
+        install_gems_from(source_filepath, gem_names)
 
         @logger.info 'Done installing.'
         post_copying_changes
@@ -77,24 +77,65 @@ module Railsthemes
     end
 
     def download_from_code code
-      check_vcs_status
-      if File.exists?('Gemfile.lock')
-        @logger.info "Downloading theme from server..."
-        with_tempdir do |tempdir|
-          archive = File.join(tempdir, 'archive.tar.gz')
-          send_gemfile code # first time hitting the server
-          config = get_primary_configuration(File.read('Gemfile.lock'))
-          dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config}"
-          if dl_url
-            Utils.download_file_to dl_url, archive
-            @logger.info "Finished downloading."
-            install_from_archive archive
-          else
-            Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It normally looks something like your@email.com:ABCDEF.")
-          end
-        end
+      vcs_is_unclean_message = check_vcs_status
+      if vcs_is_unclean_message
+        Safe.log_and_abort vcs_is_unclean_message
       else
-        Safe.log_and_abort("We could not find your Gemfile.lock file.") unless File.exists?('Gemfile.lock')
+        if File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
+          install_from_server code
+        else
+          ask_to_install_unsupported code
+        end
+      end
+    end
+
+    def install_from_server code
+      @logger.info "Downloading theme from server..."
+      with_tempdir do |tempdir|
+        archive = File.join(tempdir, 'archive.tar.gz')
+        if File.exists?('Gemfile.lock')
+          send_gemfile code # first time hitting the server
+        end
+        config = get_primary_configuration(Utils.read_file('Gemfile.lock'))
+        dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config}"
+        if dl_url
+          Utils.download_file_to dl_url, archive
+          @logger.info "Finished downloading."
+          install_from_archive archive
+        else
+          Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It normally looks something like your@email.com:ABCDEF.")
+        end
+      end
+    end
+
+    def ask_to_install_unsupported code
+      @logger.info "WARNING\n"
+
+      if File.exists?('Gemfile.lock')
+        @logger.info <<-EOS
+Your Gemfile.lock file indicates that you are using a version of Rails that
+is not officially supported by RailsThemes.
+        EOS
+      else
+        @logger.info <<-EOS
+We could not find a Gemfile.lock file in this directory. This could indicate
+that you are not in a Rails application, or that you are not using Bundler
+(which might mean that you are using a version of Rails that is not
+officially supported by RailsThemes.)
+        EOS
+      end
+      @logger.info <<-EOS
+While Rails applications that are less than version 3.1 are not officially
+supported, you can try installing anyway, or can stop. If you stop, then you
+can ask for a refund. If you install, we cannot guarantee that RailsThemes
+wil work for your app. You may have to do some custom changes, which might
+be as easy as copying files, but which may be more complicated.
+      EOS
+
+      if Safe.yes? 'Do you still wish to install the theme? [y/N]'
+        install_from_server code
+      else
+        Safe.log_and_abort 'Halting.'
       end
     end
 
@@ -127,22 +168,26 @@ module Railsthemes
       end
     end
 
-    def gems_used
-      gems_used File.read('Gemfile.lock')
+    def gemspecs gemfile_contents = nil
+      gemfile_contents ||= Utils.read_file('Gemfile.lock')
+      return [] if gemfile_contents.strip == ''
+      lockfile = Bundler::LockfileParser.new(gemfile_contents)
+      lockfile.specs
     end
 
-    def gems_used contents
-      return [] if contents.strip == ''
-      lockfile = Bundler::LockfileParser.new(contents)
-      lockfile.specs.map(&:name)
+    def get_primary_configuration gemfile_contents
+      gem_names = gemspecs(gemfile_contents).map(&:name)
+      (gem_names.include?('haml') ? 'haml' : 'erb') + ',' +
+      (gem_names.include?('sass') ? 'scss' : 'css')
     end
 
-    def get_primary_configuration contents
-      gems = gems_used(contents)
-      to_return = []
-      to_return << (gems.include?('haml') ? 'haml' : 'erb')
-      to_return << (gems.include?('sass') ? 'scss' : 'css')
-      to_return * ','
+    def rails_version gemfile_contents = nil
+      gemfile_contents ||= Utils.read_file('Gemfile.lock')
+      specs = gemspecs(gemfile_contents)
+      rails = specs.select{ |x| x.name == 'rails' }.first
+      if rails && rails.version
+        rails.version
+      end
     end
 
     def send_gemfile code
@@ -206,7 +251,7 @@ end
 
       lines = []
       if File.exists?(File.join('config', 'routes.rb'))
-        lines = File.read('config/routes.rb').split("\n")
+        lines = Utils.read_file('config/routes.rb').split("\n")
         last = lines.pop
         if lines.grep(/railsthemes#landing/).empty?
           lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
@@ -242,7 +287,7 @@ end
         result = Safe.system_call('svn status')
       end
       unless result.size == 0
-        Safe.log_and_abort("\n#{variety} reports that you have the following pending changes:\n#{result}Please stash or commit the changes before proceeding to ensure that you can roll back after installing if you want.")
+        return "\n#{variety} reports that you have the following pending changes:\n#{result}\nPlease roll back or commit the changes before proceeding to ensure that you can roll back after installing if you want."
       end
     end
 
