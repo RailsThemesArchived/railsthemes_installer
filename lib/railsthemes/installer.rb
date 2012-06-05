@@ -45,6 +45,8 @@ module Railsthemes
         @logger.info 'Done installing.'
         post_copying_changes
         print_post_installation_instructions
+        style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
+        `open #{style_guide}` if style_guide
       elsif archive?(source_filepath)
         if File.exists?(source_filepath)
           install_from_archive source_filepath
@@ -243,17 +245,17 @@ Yay! Your theme is installed!
 =============================
 
 What now?
-1) Remove or comment out your old stylesheets, as these may conflict with the new theme
+1) Remove or comment out your old stylesheets, as these may conflict with the new theme.
 2) Ensure your new application layout file contains everything that you wanted
    from the old one.
-3) Restart your development server if it is currently running (the asset pipeline can
-   be finnicky.)
-4) Check out the samples at:
+3) Start or restart your development server.
+4) Check out the local theme samples at:
    http://localhost:3000/railsthemes/landing
    http://localhost:3000/railsthemes/inner
    http://localhost:3000/railsthemes/jquery_ui
-5) There are some help articles for your perusal at support.railsthemes.com.
-6) Let us know how it went: @railsthemes or support@railsthemes.com
+5) Theme documentation is located in the doc folder.
+6) There are some help articles for your perusal at http://support.railsthemes.com.
+7) Let us know how it went: @railsthemes or support@railsthemes.com.
       EOS
     end
 
