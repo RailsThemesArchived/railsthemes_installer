@@ -77,10 +77,10 @@ module Railsthemes
     def download_from_code code
       check_vcs_status
       if File.exists?('Gemfile.lock')
-        @logger.info "Downloading..."
+        @logger.info "Downloading theme from server..."
         with_tempdir do |tempdir|
           archive = File.join(tempdir, 'archive.tar.gz')
-          send_gemfile code
+          send_gemfile code # first time hitting the server
           config = get_primary_configuration(File.read('Gemfile.lock'))
           dl_url = get_download_url "#{@server}/download?code=#{code}&config=#{config}"
           if dl_url
@@ -88,7 +88,7 @@ module Railsthemes
             @logger.info "Finished downloading."
             install_from_archive archive
           else
-            Safe.log_and_abort("We didn't understand the code you gave to download the theme (#{code})")
+            Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It normally looks something like your@email.com:ABCDEF.")
           end
         end
       else
@@ -107,17 +107,19 @@ module Railsthemes
         end
         path = server_request_url.gsub(%r{https?://[^/]+}, '')
         response = http.request_get(path)
+      rescue SocketError => e
+        Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
-        @logger.info e.message
-        @logger.info e.backtrace
+        #@logger.info e.message
+        #@logger.info e.backtrace
       end
 
       if response
         if response.code.to_s == '200'
           return response.body
         else
-          @logger.info response
-          @logger.info "Got a #{response.code} error while trying to download."
+          #@logger.info response
+          #@logger.info "Got a #{response.code} error while trying to download."
           return nil
         end
       end
@@ -145,6 +147,8 @@ module Railsthemes
       begin
         response = RestClient.post("#{@server}/gemfiles/parse",
           :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
+      rescue SocketError => e
+        Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'
       rescue Exception => e
         @logger.info e.message
         @logger.info e.backtrace
