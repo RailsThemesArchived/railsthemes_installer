@@ -176,7 +176,7 @@ describe Railsthemes::Installer do
           'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
           :body => '', :status => ['401', 'Unauthorized']
         mock(@installer).get_primary_configuration('') { '' }
-        mock(Railsthemes::Safe).log_and_abort(/didn't understand/)
+        mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
         @installer.download_from_code 'panozzaj@gmail.com:code'
       end
     end
@@ -254,6 +254,51 @@ describe Railsthemes::Installer do
         mock(Railsthemes::Safe).system_call('svn status') { '' }
         @installer.check_vcs_status
       end
+    end
+  end
+
+  describe '#create_railsthemes_demo_pages' do
+    before do
+      FileUtils.mkdir('config')
+      File.open(File.join('config', 'routes.rb'), 'w') do |f|
+        f.write <<-EOS
+RailsApp::Application.routes.draw do
+  # This is a legacy wild controller route that's not recommended for RESTful applications.
+  # Note: This route will make all actions in every controller accessible via GET requests.
+  # match ':controller(/:action(/:id(.:format)))'
+end
+        EOS
+      end
+    end
+
+    it 'should create a RailsThemes controller' do
+      @installer.create_railsthemes_demo_pages
+      controller = File.join('app', 'controllers', 'railsthemes_controller.rb')
+      File.exists?(controller).should be_true
+      lines = File.read(controller).split("\n")
+      lines.count.should == 11
+      lines.first.should match /class RailsthemesController < ApplicationController/
+    end
+
+    it 'should insert lines into the routes file' do
+      @installer.create_railsthemes_demo_pages
+      routes_file = File.join('config', 'routes.rb')
+      File.exists?(routes_file).should be_true
+      lines = File.read(routes_file).split("\n")
+      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
+      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
+      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
+    end
+
+    it 'should not insert lines into the routes file when run more than once' do
+      @installer.create_railsthemes_demo_pages
+      @installer.create_railsthemes_demo_pages
+      routes_file = File.join('config', 'routes.rb')
+      File.exists?(routes_file).should be_true
+      lines = File.read(routes_file).split("\n")
+      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
+      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
+      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
     end
   end
 end

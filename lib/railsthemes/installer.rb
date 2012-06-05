@@ -181,11 +181,12 @@ module Railsthemes
     # for people to view the theme correctly
     def post_copying_changes
       Utils.remove_file File.join('public', 'index.html')
-      @logger.info 'Analyzing existing project structure...'
-      create_railsthemes_controller
+      create_railsthemes_demo_pages
     end
 
-    def create_railsthemes_controller
+    def create_railsthemes_demo_pages
+      @logger.info 'Creating RailsThemes demo pages...'
+
       FileUtils.mkdir_p(File.join('app', 'controllers'))
       File.open(File.join('app', 'controllers', 'railsthemes_controller.rb'), 'w') do |f|
         f.write <<-EOS
@@ -204,19 +205,27 @@ end
       end
 
       lines = []
-      if File.exists?('config/routes.rb')
+      if File.exists?(File.join('config', 'routes.rb'))
         lines = File.read('config/routes.rb').split("\n")
         last = lines.pop
-        lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
-        lines << "  match 'railsthemes/inner' => 'railsthemes#inner'"
-        lines << "  match 'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'"
+        if lines.grep(/railsthemes#landing/).empty?
+          lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
+        end
+        if lines.grep(/railsthemes#inner/).empty?
+          lines << "  match 'railsthemes/inner' => 'railsthemes#inner'"
+        end
+        if lines.grep(/railsthemes#jquery_ui/).empty? 
+          lines << "  match 'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'"
+        end
         lines << last
-        File.open('config/routes.rb', 'w') do |f|
+        File.open(File.join('config', 'routes.rb'), 'w') do |f|
           lines.each do |line|
             f.puts line
           end
         end
       end
+
+      @logger.info 'Done creating RailsThemes demo pages.'
     end
 
     def check_vcs_status
