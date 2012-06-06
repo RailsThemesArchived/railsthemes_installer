@@ -71,6 +71,10 @@ module Railsthemes
       @logger.info "Extracting..."
       with_tempdir do |tempdir|
         Safe.system_call untar_string(filepath, tempdir)
+        # remove any pesky hidden files that crept into the archivej
+        #Dir["#{tempdir}/**/.*"].reject {|x| x =~ /\/\.\.?$/}.each do |file|
+        #  File.unlink(file)
+        #end
         @logger.info "Finished extracting."
         install_from_file_system tempdir
       end
