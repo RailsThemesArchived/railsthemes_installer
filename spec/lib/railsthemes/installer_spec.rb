@@ -59,6 +59,28 @@ describe Railsthemes::Installer do
         @installer.install_from_file_system("does not exist")
       end
     end
+
+    describe 'popping up the documentation on a successful install' do
+      before do
+        # set up files for copying
+        FileUtils.mkdir_p('filepath/base')
+        FileUtils.touch('filepath/base/a')
+        FileUtils.touch('filepath/base/b')
+        FileUtils.mkdir_p('filepath/gems')
+        mock(@installer).post_copying_changes
+      end
+
+      it 'should not pop it up when the user specified not to pop it up' do
+        @installer.doc_popup = false
+        dont_allow(@installer).popup_documentation
+        @installer.install_from_file_system 'filepath'
+      end
+
+      it 'should pop it up when the user did not specify to not pop it up' do
+        mock(@installer).popup_documentation
+        @installer.install_from_file_system 'filepath'
+      end
+    end
   end
 
   describe :install_gems_from do

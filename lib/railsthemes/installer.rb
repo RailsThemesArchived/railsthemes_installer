@@ -20,6 +20,11 @@ module Railsthemes
       @logger.formatter = proc do |severity, datetime, progname, msg|
         "#{msg}\n"
       end
+      @doc_popup = true
+    end
+
+    def doc_popup= doc_popup
+      @doc_popup = doc_popup
     end
 
     def ensure_in_rails_root
@@ -45,8 +50,7 @@ module Railsthemes
         @logger.info 'Done installing.'
         post_copying_changes
         print_post_installation_instructions
-        style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
-        `open #{style_guide}` if style_guide
+        popup_documentation if @doc_popup
       elsif archive?(source_filepath)
         if File.exists?(source_filepath)
           install_from_archive source_filepath
@@ -58,6 +62,11 @@ module Railsthemes
       else
         print_usage_and_abort 'Need to specify either a directory or an archive file when --file is used.'
       end
+    end
+
+    def popup_documentation
+      style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
+      Safe.system_call("open #{style_guide}") if style_guide
     end
 
     def install_gems_from source_filepath, gem_names

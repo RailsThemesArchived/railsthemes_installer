@@ -5,18 +5,26 @@ require "railsthemes"
 
 class Installer < Thor
   desc "install CODE", "Install from RailsThemes.com using your download code"
-  method_option :file, :aliases => "-f", :desc => "Use local filename instead of downloading", :type => :boolean
+  method_option :file,
+    :desc => "Use local filename instead of downloading.",
+    :type => :boolean
+  method_option :no_doc_popup,
+    :desc => "Do not pop up documentation on successful install.",
+    :aliases => "--no-doc-popup",
+    :type => :boolean
 
   def install code_or_file
+    installer = Railsthemes::Installer.new
+    installer.doc_popup = !options[:no_doc_popup]
     if options[:file]
       file = code_or_file
       abort 'Please specify a file to install from' unless file
       puts "Installing from file: #{file}."
-      Railsthemes::Installer.new.install_from_file_system file
+      installer.install_from_file_system file
     else
       code = code_or_file
       abort 'Please specify a code to install from' unless code
-      Railsthemes::Installer.new.download_from_code code
+      installer.download_from_code code
     end
   end
 
