@@ -43,9 +43,16 @@ module Railsthemes
         # it in the ERB case, so safe to delete here
         Utils.remove_file('app/views/layouts/application.html.erb')
 
-        FileUtils.cp_r(File.join(source_filepath, 'base', '.'), '.')
-        gem_names = gemspecs(Utils.read_file('Gemfile.lock')).map(&:name) - ['haml', 'sass']
-        install_gems_from(source_filepath, gem_names)
+        Dir["#{source_filepath}/base/**/*"].each do |src|
+          dest = src.sub("#{source_filepath}/base/", '')
+          if File.directory?(src)
+            FileUtils.mkdir_p(dest)
+          else
+            unless dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)
+              FileUtils.cp(src, dest)
+            end
+          end
+        end
 
         @logger.info 'Done installing.'
         post_copying_changes

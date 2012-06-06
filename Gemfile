@@ -16,6 +16,6 @@ group :test do
   gem 'rspec'
   gem 'rr'
   gem 'autotest'
-  gem 'fakefs', :require => 'fakefs/safe'
+  gem 'fakefs', :require => 'fakefs/safe', :git => 'https://github.com/defunkt/fakefs'
   gem 'fakeweb'
 end

@@ -39,6 +39,35 @@ describe Railsthemes::Installer do
       end
     end
 
+    describe 'override file behavior' do
+      before do
+        FileUtils.mkdir_p('filepath/gems')
+        FileUtils.mkdir_p('filepath/base/app/assets/stylesheets')
+        FileUtils.mkdir_p("app/assets/stylesheets")
+        @filename = 'app/assets/stylesheets/railsthemes_THEME_overrides.anything'
+        FileUtils.touch("filepath/base/#{@filename}")
+        mock(@installer).post_copying_changes
+        stub(@installer).popup_documentation
+      end
+
+      it 'should not overwrite override files when they already exist' do
+        File.open(@filename, 'w') do |f|
+          f.write "existing override"
+        end
+
+        @installer.install_from_file_system('filepath')
+        File.exists?(@filename).should be_true
+        File.read(@filename).should =~ /existing override/
+      end
+
+      it 'should create override files when they do not already exist' do
+        @installer.install_from_file_system('filepath')
+        File.exists?(@filename).should be_true
+        File.read(@filename).should == ''
+      end
+    end
+
+
     context 'when the filepath is an archive file' do
       it 'should extract the archive file to a temp directory if the archive exists' do
         archive = 'tarfile.tar.gz'
