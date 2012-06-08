@@ -125,7 +125,7 @@ module Railsthemes
           @logger.info "Finished downloading."
           install_from_archive archive
         else
-          Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It normally looks something like your@email.com:ABCDEF.")
+          Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It should look something like your@email.com:ABCDEF.")
         end
       end
     end
@@ -142,16 +142,17 @@ is not officially supported by RailsThemes.
         @logger.info <<-EOS
 We could not find a Gemfile.lock file in this directory. This could indicate
 that you are not in a Rails application, or that you are not using Bundler
-(which might mean that you are using a version of Rails that is not
+(which probably means that you are using a version of Rails that is not
 officially supported by RailsThemes.)
         EOS
       end
       @logger.info <<-EOS
 While Rails applications that are less than version 3.1 are not officially
-supported, you can try installing anyway, or can stop. If you stop, then you
-can ask for a refund. If you install, we cannot guarantee that RailsThemes
-wil work for your app. You may have to do some custom changes, which might
-be as easy as copying files, but which may be more complicated.
+supported, you can try installing anyway, or can stop. If you cancel the
+install before downloading, we can refund your purchase. If you install,
+we cannot guarantee that RailsThemes will work for your app. You may have
+to do some custom changes, which might be as easy as copying files,
+but which may be more complicated.
       EOS
 
       if Safe.yes? 'Do you still wish to install the theme? [y/N]'
