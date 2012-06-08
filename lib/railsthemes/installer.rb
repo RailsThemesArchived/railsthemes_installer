@@ -53,6 +53,8 @@ module Railsthemes
             end
           end
         end
+        gem_names = gemspecs(Utils.read_file('Gemfile.lock')).map(&:name) - ['haml', 'sass']
+        install_gems_from(source_filepath, gem_names)
 
         @logger.info 'Done installing.'
         post_copying_changes
