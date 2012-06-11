@@ -322,17 +322,24 @@ Yay! Your theme is installed!
 
 =============================
 
+Documentation and help
+
+Theme documentation is located in the doc folder.
+
+There are some help articles for your perusal at http://support.railsthemes.com.
+
+
 What now?
-1) Ensure your new application layout file contains everything that you wanted
-   from the old one.
+1) Make sure that you have the jquery-rails gem installed. All of the current
+   themes require this in your Gemfile so we can use jQuery UI.
 2) Start or restart your development server.
 3) Check out the local theme samples at:
    http://localhost:3000/railsthemes/landing
    http://localhost:3000/railsthemes/inner
    http://localhost:3000/railsthemes/jquery_ui
-4) Theme documentation is located in the doc folder.
-5) There are some help articles for your perusal at http://support.railsthemes.com.
-6) Let us know how it went: @railsthemes or support@railsthemes.com.
+4) Ensure your new application layout file contains everything that you wanted
+   from the old one.
+5) Let us know how it went: @railsthemes or support@railsthemes.com.
       EOS
     end
 
