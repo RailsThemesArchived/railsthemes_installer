@@ -315,6 +315,7 @@ end
     end
 
     def print_post_installation_instructions
+      number = 0
       @logger.info <<-EOS
 
 Yay! Your theme is installed!
@@ -322,17 +323,16 @@ Yay! Your theme is installed!
 =============================
 
 What now?
-1) Remove or comment out your old stylesheets, as these may conflict with the new theme.
-2) Ensure your new application layout file contains everything that you wanted
+1) Ensure your new application layout file contains everything that you wanted
    from the old one.
-3) Start or restart your development server.
-4) Check out the local theme samples at:
+2) Start or restart your development server.
+3) Check out the local theme samples at:
    http://localhost:3000/railsthemes/landing
    http://localhost:3000/railsthemes/inner
    http://localhost:3000/railsthemes/jquery_ui
-5) Theme documentation is located in the doc folder.
-6) There are some help articles for your perusal at http://support.railsthemes.com.
-7) Let us know how it went: @railsthemes or support@railsthemes.com.
+4) Theme documentation is located in the doc folder.
+5) There are some help articles for your perusal at http://support.railsthemes.com.
+6) Let us know how it went: @railsthemes or support@railsthemes.com.
       EOS
     end
 
