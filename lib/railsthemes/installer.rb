@@ -103,11 +103,43 @@ module Railsthemes
       if vcs_is_unclean_message
         Safe.log_and_abort vcs_is_unclean_message
       else
-        if File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
-          install_from_server code
+        version_is_bad_message = check_installer_version
+        if version_is_bad_message
+          Safe.log_and_abort version_is_bad_message
         else
-          ask_to_install_unsupported code
+          if File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
+            install_from_server code
+          else
+            ask_to_install_unsupported code
+          end
         end
+      end
+    end
+
+    def check_installer_version
+      begin
+        response = Utils.get_url(@server + '/installer/version')
+      rescue SocketError => e
+        Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
+      rescue Exception => e
+        #@logger.info e.message
+        #@logger.info e.backtrace
+      end
+
+      if response && response.code.to_s == '200'
+        server_recommended_version_string = response.body
+        server_recommended_version = Gem::Version.new(server_recommended_version_string)
+        local_installer_version = Gem::Version.new(Railsthemes::VERSION)
+
+        if server_recommended_version > local_installer_version
+          <<-EOS
+          Your version is older than the recommended version.
+          Your version: #{Railsthemes::VERSION}
+          Recommended version: #{server_recommended_version_string}
+          EOS
+        end
+      else
+        'There was an issue checking your installer version.'
       end
     end
 
@@ -165,14 +197,7 @@ but which may be more complicated.
     def get_download_url server_request_url
       response = nil
       begin
-        url = URI.parse(server_request_url)
-        http = Net::HTTP.new url.host, url.port
-        if server_request_url =~ /^https/
-          http.use_ssl = true
-          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        end
-        path = server_request_url.gsub(%r{https?://[^/]+}, '')
-        response = http.request_get(path)
+        response = Utils.get_url server_request_url
       rescue SocketError => e
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
@@ -180,14 +205,10 @@ but which may be more complicated.
         #@logger.info e.backtrace
       end
 
-      if response
-        if response.code.to_s == '200'
-          return response.body
-        else
-          #@logger.info response
-          #@logger.info "Got a #{response.code} error while trying to download."
-          return nil
-        end
+      if response && response.code.to_s == '200'
+        response.body
+      else
+        nil
       end
     end
 

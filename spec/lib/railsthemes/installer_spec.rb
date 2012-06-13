@@ -226,25 +226,81 @@ describe Railsthemes::Installer do
       @installer.download_from_code 'thecode'
     end
 
+    it 'should abort if the installer version is not up-to-date' do
+      mock(@installer).check_vcs_status
+      mock(@installer).check_installer_version { 'msg' }
+      mock(Railsthemes::Safe).log_and_abort('msg')
+      @installer.download_from_code 'thecode'
+    end
+
     it 'should ask the user if they still want to install when a Gemfile.lock is not present' do
       File.unlink('Gemfile.lock')
-      mock(@installer).check_vcs_status { nil }
+      mock(@installer).check_vcs_status
+      mock(@installer).check_installer_version
       mock(@installer).ask_to_install_unsupported 'thecode'
       @installer.download_from_code 'thecode'
     end
 
     it 'should ask the user if they still want to install when the rails version is < 3.1' do
-      mock(@installer).check_vcs_status { nil }
+      mock(@installer).check_vcs_status
+      mock(@installer).check_installer_version
       mock(@installer).rails_version { Gem::Version.new('3.0.9') }
       mock(@installer).ask_to_install_unsupported 'thecode'
       @installer.download_from_code 'thecode'
     end
 
     it 'should install from the server otherwise' do
-      mock(@installer).check_vcs_status { nil }
+      mock(@installer).check_vcs_status
+      mock(@installer).check_installer_version
       mock(@installer).rails_version { Gem::Version.new('3.1.0') }
       mock(@installer).install_from_server 'thecode'
       @installer.download_from_code 'thecode'
+    end
+  end
+
+  def with_installer_version version, &block
+    old_version = Railsthemes::VERSION
+    Railsthemes.send(:remove_const, 'VERSION')
+    Railsthemes.const_set('VERSION', version)
+
+    block.call
+
+    Railsthemes.send(:remove_const, 'VERSION')
+    Railsthemes.const_set('VERSION', old_version)
+  end
+
+  describe '#check_installer_version' do
+    it 'should return message if the current installer version is < server recommendation' do
+      FakeWeb.register_uri :get, /\/installer\/version$/, :body => '1.0.4'
+      with_installer_version '1.0.3' do
+        result = @installer.check_installer_version
+        result.should_not be_nil
+        result.should match(/Your version is older than the recommended version/)
+        result.should match(/Your version: 1\.0\.3/)
+        result.should match(/Recommended version: 1\.0\.4/)
+      end
+    end
+
+    it 'should return nothing if the current installer version is = server recommendation' do
+      FakeWeb.register_uri :get, /\/installer\/version$/, :body => '1.0.4'
+      with_installer_version '1.0.4' do
+        result = @installer.check_installer_version
+        result.should be_nil
+      end
+    end
+
+    it 'should return nothing if the current installer version is > server recommendation' do
+      FakeWeb.register_uri :get, /\/installer\/version$/, :body => '1.0.4'
+      with_installer_version '1.0.5' do
+        result = @installer.check_installer_version
+        result.should be_nil
+      end
+    end
+
+    it 'should return an error message on any HTTP errors' do
+      FakeWeb.register_uri :get, /\/installer\/version$/,
+        :body => '', :status => ['401', 'Unauthorized']
+      @installer.check_installer_version.should_not be_nil
     end
   end
 

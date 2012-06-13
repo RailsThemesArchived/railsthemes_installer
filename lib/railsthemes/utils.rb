@@ -30,5 +30,16 @@ module Railsthemes
         end
       end
     end
+
+    def self.get_url server_request_url
+      url = URI.parse(server_request_url)
+      http = Net::HTTP.new url.host, url.port
+      if server_request_url =~ /^https/
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      end
+      path = server_request_url.gsub(%r{https?://[^/]+}, '')
+      http.request_get(path)
+    end
   end
 end
