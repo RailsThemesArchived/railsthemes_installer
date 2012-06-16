@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'railsthemes'
+#require 'railsthemes/os'
 
 describe Railsthemes::Installer do
   def using_gems *gems
@@ -20,7 +21,13 @@ describe Railsthemes::Installer do
     @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
-    stub(@installer).generate_tempdir_name { '/tmp' }
+    @tempdir = ''
+    if OS.windows?
+      @tempdir = File.join('C:', 'Users', 'Admin', 'AppData', 'Local', 'Temp')
+    else
+      @tempdir = File.join('/', 'tmp')
+    end
+    stub(@installer).generate_tempdir_name { @tempdir }
     FileUtils.touch('Gemfile.lock')
   end
 
@@ -124,7 +131,7 @@ describe Railsthemes::Installer do
 
   describe :install_from_archive do
     it 'should extract the archive correctly' do
-      mock(@installer).install_from_file_system '/tmp'
+      mock(@installer).install_from_file_system @tempdir
       mock(@installer).untar_string('filepath', anything) { 'untar string' }
       mock(Railsthemes::Safe).system_call('untar string')
       @installer.install_from_archive 'filepath'
@@ -315,8 +322,8 @@ describe Railsthemes::Installer do
           /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
           :body => 'auth_url'
         mock(@installer).get_primary_configuration('') { 'haml,scss' }
-        mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
-        mock(@installer).install_from_archive '/tmp/archive.tar.gz'
+        mock(Railsthemes::Utils).download_file_to('auth_url', "#{@tempdir}/archive.tar.gz")
+        mock(@installer).install_from_archive "#{@tempdir}/archive.tar.gz"
         @installer.install_from_server 'panozzaj@gmail.com:code'
       end
 
