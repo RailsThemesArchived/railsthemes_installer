@@ -145,7 +145,7 @@ describe Railsthemes::Installer do
 
   describe :install_gems_from do
     it 'should install the gems that we specify that match' do
-      FakeFS::FileSystem.clone('spec/fixtures')
+      FakeFS::FileSystem.clone('spec/fixtures/blank-assets')
       @installer.install_gems_from("spec/fixtures/blank-assets", ['formtastic', 'kaminari'])
       File.exist?(File.join('app', 'assets', 'stylesheets', 'formtastic.css.scss')).should be_true
       File.exist?(File.join('app', 'assets', 'stylesheets', 'kaminari.css.scss')).should be_false
@@ -155,10 +155,11 @@ describe Railsthemes::Installer do
 
   describe :install_from_archive do
     it 'should extract the archive correctly' do
+      filename = 'spec/fixtures/blank-assets.tar.gz'
+      FakeFS::FileSystem.clone(filename)
       mock(@installer).install_from_file_system @tempdir
-      mock(@installer).untar_string('filepath', anything) { 'untar string' }
-      mock(Railsthemes::Safe).system_call('untar string')
-      @installer.install_from_archive 'filepath'
+      @installer.install_from_archive filename
+      puts Dir.entries
     end
   end
 

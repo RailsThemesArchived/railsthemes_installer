@@ -114,11 +114,17 @@ module Railsthemes
     def install_from_archive filepath
       @logger.warn "Extracting..."
       with_tempdir do |tempdir|
-        Safe.system_call untar_string(filepath, tempdir)
+        io = Tar._ungzip(File.open(filepath))
+        Tar._untar(io, tempdir)
+
+        puts Dir.entries('.')
+        puts Dir["#{tempdir}/**/.*"]
         # remove any pesky hidden files that crept into the archive
         Dir["#{tempdir}/**/.*"].reject {|x| x =~ /\/\.\.?$/}.each do |file|
+          @logger.info "Deleting hidden/system file: #{file} "
           File.unlink(file)
         end
+
         @logger.warn "Finished extracting."
         install_from_file_system tempdir
       end
@@ -163,6 +169,9 @@ module Railsthemes
           Your version: #{Railsthemes::VERSION}
           Recommended version: #{server_recommended_version_string}
           EOS
+        else
+          @logger.debug "server recommended version: #{server_recommended_version_string}"
+          nil
         end
       else
         'There was an issue checking your installer version.'
