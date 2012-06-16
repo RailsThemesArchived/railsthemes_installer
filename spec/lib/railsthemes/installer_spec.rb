@@ -18,7 +18,7 @@ describe Railsthemes::Installer do
   end
 
   before do
-    @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
+    @logger = Logger.new(File.join(Dir.tmpdir, 'railsthemes.log'))
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
     @tempdir = ''
@@ -41,6 +41,30 @@ describe Railsthemes::Installer do
         mock(@installer).post_copying_changes
 
         @installer.install_from_file_system('filepath')
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+      end
+
+      it 'should handle directories that have spaces' do
+        FileUtils.mkdir_p('file path/base')
+        FileUtils.touch('file path/base/a')
+        FileUtils.touch('file path/base/b')
+        FileUtils.mkdir_p('file path/gems')
+        mock(@installer).post_copying_changes
+
+        @installer.install_from_file_system('file path')
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+      end
+
+      it 'should handle windows style paths' do
+        FileUtils.mkdir_p('fp1/fp2/base')
+        FileUtils.touch('fp1/fp2/base/a')
+        FileUtils.touch('fp1/fp2/base/b')
+        FileUtils.mkdir_p('fp1/fp2/gems')
+        mock(@installer).post_copying_changes
+
+        @installer.install_from_file_system('fp1\fp2')
         File.exists?('a').should be_true
         File.exists?('b').should be_true
       end
