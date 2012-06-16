@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'railsthemes'
-#require 'railsthemes/os'
+require 'railsthemes/os'
 
 describe Railsthemes::Installer do
   def using_gems *gems
@@ -499,6 +499,21 @@ end
     it 'should return nil if there is no rails present' do
       gemfile = using_gem_specs
       @installer.rails_version(gemfile).should be_nil
+    end
+  end
+
+  describe 'popup_documentation' do
+    it 'should not open if the style guide does not exist' do
+      dont_allow(Launchy).open(anything)
+      @installer.popup_documentation
+    end
+
+    it 'should open the style guide correctly if it exists' do
+      FileUtils.mkdir_p('doc')
+      filename = 'doc/Theme_Envy_Usage_And_Style_Guide.html'
+      FileUtils.touch(filename)
+      mock(Launchy).open(filename)
+      @installer.popup_documentation
     end
   end
 end

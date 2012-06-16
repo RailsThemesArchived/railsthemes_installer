@@ -6,6 +6,7 @@ require 'tmpdir'
 require 'bundler'
 require 'net/http'
 require 'rest-client'
+require 'launchy'
 
 module Railsthemes
   class Installer
@@ -97,7 +98,8 @@ module Railsthemes
 
     def popup_documentation
       style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
-      Safe.system_call("open #{style_guide}") if style_guide
+      @logger.debug("style_guide: #{style_guide}")
+      Launchy.open(style_guide) if style_guide
     end
 
     def install_gems_from source_filepath, gem_names

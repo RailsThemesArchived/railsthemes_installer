@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 gemspec
 gem 'thor'
 gem 'rest-client'
+gem 'launchy'
 
 group :development do
   gem 'gem-release'
