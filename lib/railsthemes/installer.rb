@@ -114,11 +114,11 @@ module Railsthemes
     def install_from_archive filepath
       @logger.warn "Extracting..."
       with_tempdir do |tempdir|
-        io = Tar._ungzip(File.open(filepath))
+        io = Tar._ungzip(File.open(filepath, 'rb'))
         Tar._untar(io, tempdir)
 
-        puts Dir.entries('.')
-        puts Dir["#{tempdir}/**/.*"]
+        @logger.debug Dir.entries('.')
+        @logger.debug Dir["#{tempdir}/**/.*"]
         # remove any pesky hidden files that crept into the archive
         Dir["#{tempdir}/**/.*"].reject {|x| x =~ /\/\.\.?$/}.each do |file|
           @logger.info "Deleting hidden/system file: #{file} "
