@@ -1,5 +1,6 @@
 require 'fileutils'
 require 'open-uri'
+require 'railsthemes/os'
 
 # a bunch of things that should never be called in testing due to side effects
 module Railsthemes
@@ -38,7 +39,11 @@ module Railsthemes
       http = Net::HTTP.new url.host, url.port
       if server_request_url =~ /^https/
         unless @@https_seen_before
-          WinCacerts.fetch
+          Railsthemes::WinCacerts.fetch
+          @@https_seen_before = true
+        end
+        if ::OS.windows?
+          http.ca_file = 'C:/RailsInstaller/cacert.pem'
         end
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER

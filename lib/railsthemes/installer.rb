@@ -155,7 +155,7 @@ module Railsthemes
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
         @logger.info e.message
-        @logger.info e.backtrace
+        @logger.info e.backtrace * "\n"
       end
 
       if response && response.code.to_s == '200'

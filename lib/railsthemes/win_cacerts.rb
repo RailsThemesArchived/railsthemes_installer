@@ -16,10 +16,9 @@ module Railsthemes
         resp = http.get("/ca/cacert.pem")
         if resp.code == "200"
           open(cacert_file, "wb") { |file| file.write(resp.body) }
-          `set SSL_CERT_FILE=C:\RailsInstaller\cacert.pem`
-          puts `set SSL_CERT_FILE`
+          ENV['SSL_CERT_FILE']  = 'C:\RailsInstaller\cacert.pem'
         else
-          Safe.log_and_abort "A cacert.pem bundle could not be downloaded."
+          Railsthemes::Safe.log_and_abort "A cacert.pem bundle could not be downloaded."
         end
       end
     end
