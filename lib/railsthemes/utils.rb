@@ -38,11 +38,11 @@ module Railsthemes
       url = URI.parse(server_request_url)
       http = Net::HTTP.new url.host, url.port
       if server_request_url =~ /^https/
-        unless @@https_seen_before
-          Railsthemes::WinCacerts.fetch
-          @@https_seen_before = true
-        end
         if ::OS.windows?
+          unless @@https_seen_before
+            Railsthemes::WinCacerts.fetch
+            @@https_seen_before = true
+          end
           http.ca_file = 'C:/RailsInstaller/cacert.pem'
         end
         http.use_ssl = true
