@@ -4,6 +4,8 @@ require 'open-uri'
 # a bunch of things that should never be called in testing due to side effects
 module Railsthemes
   class Utils
+    @@https_seen_before = false
+
     # remove file only if it exists
     def self.remove_file filepath
       if File.exists?(filepath)
@@ -35,6 +37,9 @@ module Railsthemes
       url = URI.parse(server_request_url)
       http = Net::HTTP.new url.host, url.port
       if server_request_url =~ /^https/
+        unless @@https_seen_before
+          WinCacerts.fetch
+        end
         http.use_ssl = true
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
       end
