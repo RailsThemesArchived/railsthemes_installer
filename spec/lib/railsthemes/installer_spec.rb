@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'railsthemes'
+require 'railsthemes/os'
 
 describe Railsthemes::Installer do
   def using_gems *gems
@@ -17,10 +18,16 @@ describe Railsthemes::Installer do
   end
 
   before do
-    @logger = Logger.new(File.join Dir.tmpdir, 'railsthemes.log')
+    @logger = Logger.new(File.join(Dir.tmpdir, 'railsthemes.log'))
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
-    stub(@installer).generate_tempdir_name { '/tmp' }
+    @tempdir = ''
+    if OS.windows?
+      @tempdir = File.join('C:', 'Users', 'Admin', 'AppData', 'Local', 'Temp')
+    else
+      @tempdir = File.join('/', 'tmp')
+    end
+    stub(@installer).generate_tempdir_name { @tempdir }
     FileUtils.touch('Gemfile.lock')
   end
 
@@ -34,6 +41,30 @@ describe Railsthemes::Installer do
         mock(@installer).post_copying_changes
 
         @installer.install_from_file_system('filepath')
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+      end
+
+      it 'should handle directories that have spaces' do
+        FileUtils.mkdir_p('file path/base')
+        FileUtils.touch('file path/base/a')
+        FileUtils.touch('file path/base/b')
+        FileUtils.mkdir_p('file path/gems')
+        mock(@installer).post_copying_changes
+
+        @installer.install_from_file_system('file path')
+        File.exists?('a').should be_true
+        File.exists?('b').should be_true
+      end
+
+      it 'should handle windows style paths' do
+        FileUtils.mkdir_p('fp1/fp2/base')
+        FileUtils.touch('fp1/fp2/base/a')
+        FileUtils.touch('fp1/fp2/base/b')
+        FileUtils.mkdir_p('fp1/fp2/gems')
+        mock(@installer).post_copying_changes
+
+        @installer.install_from_file_system('fp1\fp2')
         File.exists?('a').should be_true
         File.exists?('b').should be_true
       end
@@ -114,7 +145,7 @@ describe Railsthemes::Installer do
 
   describe :install_gems_from do
     it 'should install the gems that we specify that match' do
-      FakeFS::FileSystem.clone('spec/fixtures')
+      FakeFS::FileSystem.clone('spec/fixtures/blank-assets')
       @installer.install_gems_from("spec/fixtures/blank-assets", ['formtastic', 'kaminari'])
       File.exist?(File.join('app', 'assets', 'stylesheets', 'formtastic.css.scss')).should be_true
       File.exist?(File.join('app', 'assets', 'stylesheets', 'kaminari.css.scss')).should be_false
@@ -124,10 +155,11 @@ describe Railsthemes::Installer do
 
   describe :install_from_archive do
     it 'should extract the archive correctly' do
-      mock(@installer).install_from_file_system '/tmp'
-      mock(@installer).untar_string('filepath', anything) { 'untar string' }
-      mock(Railsthemes::Safe).system_call('untar string')
-      @installer.install_from_archive 'filepath'
+      filename = 'spec/fixtures/blank-assets.tar.gz'
+      FakeFS::FileSystem.clone(filename)
+      mock(@installer).install_from_file_system @tempdir
+      @installer.install_from_archive filename
+      puts Dir.entries
     end
   end
 
@@ -315,8 +347,8 @@ describe Railsthemes::Installer do
           /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
           :body => 'auth_url'
         mock(@installer).get_primary_configuration('') { 'haml,scss' }
-        mock(Railsthemes::Utils).download_file_to('auth_url', '/tmp/archive.tar.gz')
-        mock(@installer).install_from_archive '/tmp/archive.tar.gz'
+        mock(Railsthemes::Utils).download_file_to('auth_url', "#{@tempdir}/archive.tar.gz")
+        mock(@installer).install_from_archive "#{@tempdir}/archive.tar.gz"
         @installer.install_from_server 'panozzaj@gmail.com:code'
       end
 
@@ -468,6 +500,21 @@ end
     it 'should return nil if there is no rails present' do
       gemfile = using_gem_specs
       @installer.rails_version(gemfile).should be_nil
+    end
+  end
+
+  describe 'popup_documentation' do
+    it 'should not open if the style guide does not exist' do
+      dont_allow(Launchy).open(anything)
+      @installer.popup_documentation
+    end
+
+    it 'should open the style guide correctly if it exists' do
+      FileUtils.mkdir_p('doc')
+      filename = 'doc/Theme_Envy_Usage_And_Style_Guide.html'
+      FileUtils.touch(filename)
+      mock(Launchy).open(filename)
+      @installer.popup_documentation
     end
   end
 end

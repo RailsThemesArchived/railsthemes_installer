@@ -10,12 +10,22 @@ class Installer < Thor
     :type => :boolean
   method_option :no_doc_popup,
     :desc => "Do not pop up documentation on successful install.",
-    :aliases => "--no-doc-popup",
+    :type => :boolean
+  method_option :verbose,
+    :desc => "Print more output on installation.",
+    :type => :boolean
+  # do not rename to :debug, conflicts with Thor built-in functionality
+  method_option :debugging,
+    :desc => "Print gratuitous output on installation (for debugging).",
     :type => :boolean
 
   def install code_or_file
+    # might be better to pass in the options directly if we get more options
     installer = Railsthemes::Installer.new
     installer.doc_popup = !options[:no_doc_popup]
+    installer.verbose if options[:verbose]
+    installer.debug if options[:debugging]
+
     if options[:file]
       file = code_or_file
       abort 'Please specify a file to install from' unless file
