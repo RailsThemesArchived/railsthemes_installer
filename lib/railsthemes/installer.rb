@@ -13,7 +13,7 @@ module Railsthemes
     def initialize logger = nil
       @logger = logger
       @logger ||= Logger.new(STDOUT)
-      @logger.level = Logger::WARN
+
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
         "#{msg}\n"
@@ -68,7 +68,8 @@ module Railsthemes
             @logger.debug "mkdir -p #{dest}"
             FileUtils.mkdir_p(dest)
           else
-            unless dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)
+            unless (dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)) ||
+                src =~ /\/\./ # remove any pesky hidden files that crept into the archive
               @logger.debug "cp #{src} #{dest}"
               FileUtils.cp(src, dest)
             end
@@ -103,7 +104,10 @@ module Railsthemes
     end
 
     def install_gems_from source_filepath, gem_names
+      return unless File.directory?("#{source_filepath}/gems")
+      @logger.debug "gem_names: #{gem_names * ' '}"
       gems_that_we_can_install = Dir.entries("#{source_filepath}/gems").reject{|x| x == '.' || x == '..'}
+      @logger.debug "gems_that_we_can_install: #{gems_that_we_can_install * ' '}"
       (gem_names & gems_that_we_can_install).each do |gem_name|
         src = File.join(source_filepath, 'gems', gem_name, '.')
         @logger.debug("copying gems from #{src}")
@@ -114,16 +118,8 @@ module Railsthemes
     def install_from_archive filepath
       @logger.warn "Extracting..."
       with_tempdir do |tempdir|
-        io = Tar._ungzip(File.open(filepath, 'rb'))
-        Tar._untar(io, tempdir)
-
-        @logger.debug Dir.entries('.')
-        @logger.debug Dir["#{tempdir}/**/.*"]
-        # remove any pesky hidden files that crept into the archive
-        Dir["#{tempdir}/**/.*"].reject {|x| x =~ /\/\.\.?$/}.each do |file|
-          @logger.info "Deleting hidden/system file: #{file} "
-          File.unlink(file)
-        end
+        io = Tar.ungzip(File.open(filepath, 'rb'))
+        Tar.untar(io, tempdir)
 
         @logger.warn "Finished extracting."
         install_from_file_system tempdir
@@ -287,19 +283,14 @@ but which may be more complicated.
     end
 
     def generate_tempdir_name
-      t = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
-      @logger.debug t
-      t
+      tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
+      @logger.debug "tempdir: #{tempdir}"
+      tempdir
     end
 
     def archive? filepath
       filepath =~ /\.tar\.gz$/
     end
-
-    def untar_string filepath, newdirpath
-      "tar -zxf #{filepath} -C #{newdirpath}"
-    end
-
 
     # this happens after a successful copy so that we set up the environment correctly
     # for people to view the theme correctly

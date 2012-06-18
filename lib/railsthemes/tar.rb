@@ -11,7 +11,7 @@ module Railsthemes
     #
     # Returns a StringIO whose underlying String
     # is the contents of the tar file.
-    def self._tar(path)
+    def self.tar(path)
       tarfile = StringIO.new("")
       Gem::Package::TarWriter.new(tarfile) do |tar|
         Dir[File.join(path, "**/*")].each do |file|
@@ -35,7 +35,7 @@ module Railsthemes
     # gzips the underlying string in the given StringIO,
     # returning a new StringIO representing the 
     # compressed file.
-    def self._gzip(tarfile)
+    def self.gzip(tarfile)
       gz = StringIO.new("")
       z = Zlib::GzipWriter.new(gz)
       z.write tarfile.string
@@ -48,7 +48,7 @@ module Railsthemes
 
     # un-gzips the given IO, returning the
     # decompressed version as a StringIO
-    def self._ungzip(tarfile)
+    def self.ungzip(tarfile)
       z = Zlib::GzipReader.new(tarfile)
       unzipped = StringIO.new(z.read)
       z.close
@@ -57,7 +57,7 @@ module Railsthemes
 
     # untars the given IO into the specified
     # directory
-    def self._untar(io, destination)
+    def self.untar(io, destination)
       Gem::Package::TarReader.new io do |tar|
         tar.each do |tarfile|
           destination_file = File.join destination, tarfile.full_name

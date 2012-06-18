@@ -17,15 +17,23 @@ describe Railsthemes::Installer do
       "\nGEM\n  remote: https://rubygems.org/"
   end
 
+  LOGFILE_NAME = 'railsthemes.log'
+
+  before :all do
+    File.delete(LOGFILE_NAME) if File.exists?(LOGFILE_NAME)
+  end
+
   before do
-    @logger = Logger.new(File.join(Dir.tmpdir, 'railsthemes.log'))
+    @logger = Logger.new(LOGFILE_NAME)
+    @logger.info "#{self.example.description}"
     @installer = Railsthemes::Installer.new @logger
     stub(@installer).ensure_in_rails_root
+    FakeWeb.register_uri(:get, "http://curl.haxx.se/ca/cacert.pem", :body => "CAs")
     @tempdir = ''
     if OS.windows?
       @tempdir = File.join('C:', 'Users', 'Admin', 'AppData', 'Local', 'Temp')
     else
-      @tempdir = File.join('/', 'tmp')
+      @tempdir = 'tmp'
     end
     stub(@installer).generate_tempdir_name { @tempdir }
     FileUtils.touch('Gemfile.lock')
@@ -37,24 +45,22 @@ describe Railsthemes::Installer do
         FileUtils.mkdir_p('filepath/base')
         FileUtils.touch('filepath/base/a')
         FileUtils.touch('filepath/base/b')
-        FileUtils.mkdir_p('filepath/gems')
         mock(@installer).post_copying_changes
 
         @installer.install_from_file_system('filepath')
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        File.should exist('a')
+        File.should exist('b')
       end
 
       it 'should handle directories that have spaces' do
         FileUtils.mkdir_p('file path/base')
         FileUtils.touch('file path/base/a')
         FileUtils.touch('file path/base/b')
-        FileUtils.mkdir_p('file path/gems')
         mock(@installer).post_copying_changes
 
         @installer.install_from_file_system('file path')
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        File.should exist('a')
+        File.should exist('b')
       end
 
       it 'should handle windows style paths' do
@@ -65,8 +71,17 @@ describe Railsthemes::Installer do
         mock(@installer).post_copying_changes
 
         @installer.install_from_file_system('fp1\fp2')
-        File.exists?('a').should be_true
-        File.exists?('b').should be_true
+        File.should exist('a')
+        File.should exist('b')
+      end
+
+      it 'should not copy system files' do
+        FileUtils.mkdir_p('filepath/base')
+        FileUtils.touch('filepath/base/.DS_Store')
+        mock(@installer).post_copying_changes
+
+        @installer.install_from_file_system('filepath')
+        File.should_not exist('.DS_Store')
       end
     end
 
@@ -87,13 +102,13 @@ describe Railsthemes::Installer do
         end
 
         @installer.install_from_file_system('filepath')
-        File.exists?(@filename).should be_true
+        File.should exist(@filename)
         File.read(@filename).should =~ /existing override/
       end
 
       it 'should create override files when they do not already exist' do
         @installer.install_from_file_system('filepath')
-        File.exists?(@filename).should be_true
+        File.should exist(@filename)
         File.read(@filename).should == ''
       end
     end
@@ -146,27 +161,21 @@ describe Railsthemes::Installer do
   describe :install_gems_from do
     it 'should install the gems that we specify that match' do
       FakeFS::FileSystem.clone('spec/fixtures/blank-assets')
+      # we only know about formtastic and simple_form in the gems directory
       @installer.install_gems_from("spec/fixtures/blank-assets", ['formtastic', 'kaminari'])
-      File.exist?(File.join('app', 'assets', 'stylesheets', 'formtastic.css.scss')).should be_true
-      File.exist?(File.join('app', 'assets', 'stylesheets', 'kaminari.css.scss')).should be_false
-      File.exist?(File.join('app', 'assets', 'stylesheets', 'simple_form.css.scss')).should be_false
+      File.should exist('app/assets/stylesheets/formtastic.css.scss')
+      File.should_not exist('app/assets/stylesheets/kaminari.css.scss')
+      File.should_not exist('app/assets/stylesheets/simple_form.css.scss')
     end
   end
 
   describe :install_from_archive do
-    it 'should extract the archive correctly' do
+    # does not work on Windows, NotImplementedError in tar module
+    it 'should extract and then install from that extracted directory' do
       filename = 'spec/fixtures/blank-assets.tar.gz'
       FakeFS::FileSystem.clone(filename)
       mock(@installer).install_from_file_system @tempdir
       @installer.install_from_archive filename
-      puts Dir.entries
-    end
-  end
-
-  describe :untar_string do
-    it 'should return correct value for *.tar.gz file' do
-      result = @installer.untar_string 'file.tar.gz', 'newdirpath'
-      result.should == 'tar -zxf file.tar.gz -C newdirpath'
     end
   end
 
@@ -190,7 +199,7 @@ describe Railsthemes::Installer do
        'app/views/layouts/_interior_sidebar.html.erb',
        'app/views/layouts/application.html.erb',
        'app/views/layouts/homepage.html.erb'].each do |filename|
-         File.exist?(filename).should be_true, "#{filename} was not present"
+         File.should exist(filename), "#{filename} was not present"
       end
       File.open('app/assets/stylesheets/style.css.erb').each do |line|
         line.should match /style.css.erb/
@@ -200,6 +209,7 @@ describe Railsthemes::Installer do
     before do
       stub(@installer).post_copying_changes
       FakeFS::FileSystem.clone('spec/fixtures')
+      # should add some gems to the gemfile here and test gem installation
     end
 
     it 'should extract correctly from directory' do
@@ -208,9 +218,11 @@ describe Railsthemes::Installer do
       verify_end_to_end_operation
     end
 
-    # TODO need to use a pure ruby solution to get this to mock in the file system right
+    # does not work on Windows, NotImplementedError in tar module
     it 'should extract correctly from archive' do
-      pending 'needs pure ruby untar solution'
+      filename = 'spec/fixtures/blank-assets.tar.gz'
+      @installer.install_from_file_system filename
+      verify_end_to_end_operation
     end
   end
 
