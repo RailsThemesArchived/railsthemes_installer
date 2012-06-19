@@ -113,9 +113,22 @@ module Railsthemes
       gems_that_we_can_install = Dir.entries("#{source_filepath}/gems").reject{|x| x == '.' || x == '..'}
       @logger.debug "gems_that_we_can_install: #{gems_that_we_can_install * ' '}"
       (gem_names & gems_that_we_can_install).each do |gem_name|
-        src = File.join(source_filepath, 'gems', gem_name, '.')
-        @logger.debug("copying gems from #{src}")
-        FileUtils.cp_r(src, '.')
+        gem_src = File.join(source_filepath, 'gems', gem_name, '.')
+        @logger.debug("copying gems from #{gem_src}")
+        Dir["#{gem_src}/**/*"].each do |src|
+          @logger.debug "src: #{src}"
+          dest = src.sub("#{source_filepath}/gems/#{gem_name}/", '')
+          @logger.debug "dest: #{dest}"
+          if File.directory?(src)
+            @logger.debug "mkdir -p #{dest}"
+            FileUtils.mkdir_p(dest)
+          else
+            unless src =~ /\/\./ # remove any pesky hidden files that crept into the archive
+              @logger.debug "cp #{src} #{dest}"
+              FileUtils.cp(src, dest)
+            end
+          end
+        end
       end
     end
 
