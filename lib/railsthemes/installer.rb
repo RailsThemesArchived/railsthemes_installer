@@ -11,8 +11,12 @@ require 'launchy'
 module Railsthemes
   class Installer
     def initialize logger = nil
-      @logger = logger
-      @logger ||= Logger.new(STDOUT)
+      if logger
+        @logger = logger
+      else
+        @logger ||= Logger.new(STDOUT)
+        @logger.level = Logger::WARN
+      end
 
       # just print out basic information, not all of the extra logger stuff
       @logger.formatter = proc do |severity, datetime, progname, msg|
@@ -127,11 +131,15 @@ module Railsthemes
     end
 
     def download_from_code code
+      @logger.warn "Checking version control..."
       vcs_is_unclean_message = check_vcs_status
+      @logger.warn "Done checking version control."
       if vcs_is_unclean_message
         Safe.log_and_abort vcs_is_unclean_message
       else
+        @logger.warn "Checking installer version..."
         version_is_bad_message = check_installer_version
+        @logger.warn "Done checking installer version."
         if version_is_bad_message
           Safe.log_and_abort version_is_bad_message
         else
@@ -145,9 +153,13 @@ module Railsthemes
     end
 
     def check_installer_version
+      url = @server + '/installer/version'
+      @logger.debug "installer version url: #{url}"
       begin
-        response = Utils.get_url(@server + '/installer/version')
+        response = Utils.get_url url
       rescue SocketError => e
+        @logger.info e.message
+        @logger.info e.backtrace * "\n"
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
         @logger.info e.message

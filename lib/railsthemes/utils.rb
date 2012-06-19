@@ -5,7 +5,6 @@ require 'railsthemes/os'
 # a bunch of things that should never be called in testing due to side effects
 module Railsthemes
   class Utils
-    @@https_seen_before = false
 
     # remove file only if it exists
     def self.remove_file filepath
@@ -25,31 +24,36 @@ module Railsthemes
     end
 
     # would be nice to put download status in the output (speed, progress, etc.)
+    # needs tests
     def self.download_file_to url, save_to
-      File.open(save_to, "wb") do |saved_file|
-        # the following "open" is provided by open-uri
-        open(url) do |read_file|
-          saved_file.write(read_file.read)
-        end
+      uri = URI(url)
+      http = Net::HTTP.new uri.host, uri.port
+      set_https http if uri.scheme == 'https'
+      path = url.gsub(%r{https?://[^/]+}, '')
+      response = http.get(path)
+      File.open(save_to, 'wb') do |file|
+        file.write(response.body)
       end
     end
 
-    def self.get_url server_request_url
-      url = URI.parse(server_request_url)
-      http = Net::HTTP.new url.host, url.port
-      if server_request_url =~ /^https/
-        if ::OS.windows?
-          unless @@https_seen_before
-            Railsthemes::WinCacerts.fetch
-            @@https_seen_before = true
-          end
-          http.ca_file = 'C:/RailsInstaller/cacert.pem'
-        end
-        http.use_ssl = true
-        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      end
-      path = server_request_url.gsub(%r{https?://[^/]+}, '')
+    # needs tests I think
+    def self.get_url url
+      uri = URI.parse url
+      http = Net::HTTP.new uri.host, uri.port
+      set_https http if uri.scheme == 'https'
+      path = url.gsub(%r{https?://[^/]+}, '')
       http.request_get(path)
     end
+
+    def self.set_https http
+      cacert_file = File.join(File.expand_path(File.dirname(__FILE__)), '..', '..', 'cacert.pem')
+      http.ca_file = cacert_file
+      http.ca_path = cacert_file
+      ENV['SSL_CERT_FILE'] = cacert_file
+
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    end
+
   end
 end
