@@ -4,7 +4,25 @@ require "thor"
 require "railsthemes"
 
 class Installer < Thor
-  desc "install CODE", "Install from RailsThemes.com using your download code"
+  desc "default", "The default task to run when no command is given"
+  method_option :version,
+    :desc => "See what version you have installed",
+    :aliases => ['-v', '--version'],
+    :type => :boolean
+  def default
+    if options[:version]
+      puts Railsthemes::VERSION
+    else
+      puts <<-EOS
+railsthemes -v                       # Print the version of the installer gem you are using
+railsthemes install your@email:code  # Install from RailsThemes.com using your download code
+railsthemes help [TASK]              # Describe available tasks or one specific task
+EOS
+    end
+  end
+  default_task :default
+
+  desc "install your@email:code", "Install from RailsThemes.com using your download code"
   method_option :file,
     :desc => "Use local filename instead of downloading.",
     :type => :boolean
@@ -36,11 +54,6 @@ class Installer < Thor
       abort 'Please specify a code to install from' unless code
       installer.download_from_code code
     end
-  end
-
-  desc "version", "See what version you have installed"
-  def version
-    puts Railsthemes::VERSION
   end
 
   # AP: other options could include list, remove, help, etc.
