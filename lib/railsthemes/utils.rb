@@ -44,6 +44,7 @@ module Railsthemes
       http.request_get(path)
     end
 
+    # needs tests
     def self.set_https http
       cacert_file = File.join(File.expand_path(File.dirname(__FILE__)), '..', '..', 'cacert.pem')
       http.ca_file = cacert_file
@@ -58,6 +59,7 @@ module Railsthemes
       filepath =~ /\.tar\.gz$/
     end
 
+    # needs tests
     def self.with_tempdir &block
       tempdir = generate_tempdir_name
       FileUtils.mkdir_p tempdir
@@ -65,10 +67,20 @@ module Railsthemes
       FileUtils.rm_rf tempdir
     end
 
+    # needs tests
     def self.generate_tempdir_name
       tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
-      #@logger.debug "tempdir: #{tempdir}"
+      Railsthemes.logger.debug "tempdir: #{tempdir}"
       tempdir
     end
+
+    # needs tests
+    def self.gemspecs gemfile_contents = nil
+      gemfile_contents ||= Utils.read_file('Gemfile.lock')
+      return [] if gemfile_contents.strip == ''
+      lockfile = Bundler::LockfileParser.new(gemfile_contents)
+      lockfile.specs
+    end
+
   end
 end
