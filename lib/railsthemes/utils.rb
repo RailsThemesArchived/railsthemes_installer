@@ -83,5 +83,11 @@ module Railsthemes
       lockfile.specs
     end
 
+    def self.unarchive archive, extract_to
+      logger.warn "Extracting..."
+      io = Tar.ungzip(File.open(archive, 'rb'))
+      Tar.untar(io, extract_to)
+      logger.warn "Finished extracting."
+    end
   end
 end

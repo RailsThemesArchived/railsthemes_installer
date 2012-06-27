@@ -22,12 +22,8 @@ module Railsthemes
     end
 
     def install_from_archive filepath
-      logger.warn "Extracting..."
       Railsthemes::Utils.with_tempdir do |tempdir|
-        io = Tar.ungzip(File.open(filepath, 'rb'))
-        Tar.untar(io, tempdir)
-
-        logger.warn "Finished extracting."
+        Utils.unarchive filepath, tempdir
         install_from_file_system tempdir
       end
     end
