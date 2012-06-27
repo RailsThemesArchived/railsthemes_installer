@@ -134,7 +134,7 @@ module Railsthemes
 
     def install_from_archive filepath
       @logger.warn "Extracting..."
-      with_tempdir do |tempdir|
+      Railsthemes::Utils.with_tempdir do |tempdir|
         io = Tar.ungzip(File.open(filepath, 'rb'))
         Tar.untar(io, tempdir)
 
@@ -201,7 +201,7 @@ module Railsthemes
 
     def install_from_server code
       @logger.warn "Downloading theme from server..."
-      with_tempdir do |tempdir|
+      Railsthemes::Utils.with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')
         if File.exists?('Gemfile.lock')
           send_gemfile code # first time hitting the server
@@ -298,19 +298,6 @@ but which may be more complicated.
         @logger.info e.message
         @logger.info e.backtrace
       end
-    end
-
-    def with_tempdir &block
-      tempdir = generate_tempdir_name
-      FileUtils.mkdir_p tempdir
-      yield tempdir
-      FileUtils.rm_rf tempdir
-    end
-
-    def generate_tempdir_name
-      tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
-      @logger.debug "tempdir: #{tempdir}"
-      tempdir
     end
 
     # this happens after a successful copy so that we set up the environment correctly

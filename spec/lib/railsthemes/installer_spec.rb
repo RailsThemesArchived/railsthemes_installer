@@ -35,7 +35,7 @@ describe Railsthemes::Installer do
     else
       @tempdir = 'tmp'
     end
-    stub(@installer).generate_tempdir_name { @tempdir }
+    stub(Railsthemes::Utils).generate_tempdir_name { @tempdir }
     FileUtils.touch('Gemfile.lock')
   end
 

@@ -57,5 +57,18 @@ module Railsthemes
     def self.archive? filepath
       filepath =~ /\.tar\.gz$/
     end
+
+    def self.with_tempdir &block
+      tempdir = generate_tempdir_name
+      FileUtils.mkdir_p tempdir
+      yield tempdir
+      FileUtils.rm_rf tempdir
+    end
+
+    def self.generate_tempdir_name
+      tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
+      #@logger.debug "tempdir: #{tempdir}"
+      tempdir
+    end
   end
 end
