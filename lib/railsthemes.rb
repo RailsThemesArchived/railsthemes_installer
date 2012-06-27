@@ -7,12 +7,10 @@ require 'railsthemes/installer'
 require 'railsthemes/theme_installer'
 
 module Railsthemes
-  # recalculates each time, should cache
   def self.server
+    return @server if @server
     @server = 'https://railsthemes.com'
-    if File.exist?('railsthemes_server')
-      @server = File.read('railsthemes_server').gsub("\n", '')
-    end
+    @server = File.read('railsthemes_server').gsub("\n", '') if File.exist?('railsthemes_server')
     @server
   end
 end

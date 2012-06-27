@@ -169,7 +169,6 @@ describe Railsthemes::ThemeInstaller do
       end
     end
 
-
     context 'when the filepath is an archive file' do
       it 'should extract the archive file to a temp directory if the archive exists' do
         archive = 'tarfile.tar.gz'
@@ -186,7 +185,7 @@ describe Railsthemes::ThemeInstaller do
 
     context 'otherwise' do
       it 'should print usage and report an error reading the file' do
-        mock(@installer).print_usage_and_abort(/either/)
+        mock(Railsthemes::Safe).log_and_abort(/either/)
         @installer.install_from_file_system("does not exist")
       end
     end

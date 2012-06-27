@@ -110,7 +110,7 @@ module Railsthemes
           Safe.log_and_abort 'Cannot find the file you specified.'
         end
       else
-        print_usage_and_abort 'Need to specify either a directory or an archive file when --file is used.'
+        Safe.log_and_abort 'Need to specify either a directory or an archive file when --file is used.'
       end
     end
 

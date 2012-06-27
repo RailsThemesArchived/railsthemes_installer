@@ -191,9 +191,5 @@ What now?
 5) Let us know how it went: @railsthemes or support@railsthemes.com.
       EOS
     end
-
-    def print_usage_and_abort s
-      Safe.log_and_abort s
-    end
   end
 end
