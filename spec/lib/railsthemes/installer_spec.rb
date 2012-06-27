@@ -84,18 +84,18 @@ describe Railsthemes::Installer do
     end
   end
 
-  describe :download_from_code do
+  describe :install_from_code do
     it 'should abort if the VCS is not clean' do
       mock(@installer).check_vcs_status { 'msg' }
       mock(Railsthemes::Safe).log_and_abort('msg')
-      @installer.download_from_code 'thecode'
+      @installer.install_from_code 'thecode'
     end
 
     it 'should abort if the installer version is not up-to-date' do
       mock(@installer).check_vcs_status
       mock(@installer).check_installer_version { 'msg' }
       mock(Railsthemes::Safe).log_and_abort('msg')
-      @installer.download_from_code 'thecode'
+      @installer.install_from_code 'thecode'
     end
 
     it 'should ask the user if they still want to install when a Gemfile.lock is not present' do
@@ -103,7 +103,7 @@ describe Railsthemes::Installer do
       mock(@installer).check_vcs_status
       mock(@installer).check_installer_version
       mock(@installer).ask_to_install_unsupported 'thecode'
-      @installer.download_from_code 'thecode'
+      @installer.install_from_code 'thecode'
     end
 
     it 'should ask the user if they still want to install when the rails version is < 3.1' do
@@ -111,7 +111,7 @@ describe Railsthemes::Installer do
       mock(@installer).check_installer_version
       mock(@installer).rails_version { Gem::Version.new('3.0.9') }
       mock(@installer).ask_to_install_unsupported 'thecode'
-      @installer.download_from_code 'thecode'
+      @installer.install_from_code 'thecode'
     end
 
     it 'should install from the server otherwise' do
@@ -121,7 +121,7 @@ describe Railsthemes::Installer do
       any_instance_of(Railsthemes::ThemeInstaller) do |ti|
         mock(ti).install_from_server 'thecode'
       end
-      @installer.download_from_code 'thecode'
+      @installer.install_from_code 'thecode'
     end
   end
 

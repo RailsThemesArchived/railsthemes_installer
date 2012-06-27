@@ -50,7 +50,7 @@ module Railsthemes
       popup_documentation if @doc_popup
     end
 
-    def download_from_code code
+    def install_from_code code
       logger.warn "Checking version control..."
       vcs_is_unclean_message = check_vcs_status
       logger.warn "Done checking version control."

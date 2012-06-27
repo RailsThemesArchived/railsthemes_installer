@@ -52,7 +52,7 @@ EOS
     else
       code = code_or_file
       abort 'Please specify a code to install from' unless code
-      installer.download_from_code code
+      installer.install_from_code code
     end
   end
 

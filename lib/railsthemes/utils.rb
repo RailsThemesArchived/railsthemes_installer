@@ -4,7 +4,7 @@ require 'railsthemes/os'
 
 module Railsthemes
   class Utils
-    include Railsthemes::Logging
+    extend Railsthemes::Logging
 
     # remove file only if it exists
     def self.remove_file filepath
