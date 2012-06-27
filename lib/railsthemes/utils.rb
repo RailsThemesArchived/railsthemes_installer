@@ -2,7 +2,6 @@ require 'fileutils'
 require 'open-uri'
 require 'railsthemes/os'
 
-# a bunch of things that should never be called in testing due to side effects
 module Railsthemes
   class Utils
 
@@ -55,5 +54,8 @@ module Railsthemes
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
     end
 
+    def self.archive? filepath
+      filepath =~ /\.tar\.gz$/
+    end
   end
 end

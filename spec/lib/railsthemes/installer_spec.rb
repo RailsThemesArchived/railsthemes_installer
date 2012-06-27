@@ -179,16 +179,6 @@ describe Railsthemes::Installer do
     end
   end
 
-  describe :archive? do
-    it 'should be true for tar.gz file' do
-      @installer.archive?('test/a/b/c/d.tar.gz').should be_true
-    end
-
-    it 'should be false for other extensions' do
-      @installer.archive?('test/a/b/c.tar/d.zip').should be_false
-    end
-  end
-
   describe 'end to end operation' do
     def verify_end_to_end_operation
       ['app/assets/images/image1.png',

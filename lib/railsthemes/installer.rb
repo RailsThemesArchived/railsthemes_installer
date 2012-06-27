@@ -88,7 +88,7 @@ module Railsthemes
         post_copying_changes
         print_post_installation_instructions
         popup_documentation if @doc_popup
-      elsif archive?(source_filepath)
+      elsif Railsthemes::Utils.archive?(source_filepath)
         if File.exists?(source_filepath)
           install_from_archive source_filepath
           # no need for post_installation, because we will do this in the
@@ -311,10 +311,6 @@ but which may be more complicated.
       tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
       @logger.debug "tempdir: #{tempdir}"
       tempdir
-    end
-
-    def archive? filepath
-      filepath =~ /\.tar\.gz$/
     end
 
     # this happens after a successful copy so that we set up the environment correctly
