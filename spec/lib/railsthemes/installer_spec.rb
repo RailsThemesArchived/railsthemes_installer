@@ -10,24 +10,52 @@ describe Railsthemes::Installer do
     FileUtils.touch('Gemfile.lock')
   end
 
-  describe 'popping up the documentation on a successful install' do
-    before do
-      # set up files for copying
-      FileUtils.mkdir_p('filepath/base')
-      FileUtils.touch('filepath/base/a')
-      FileUtils.touch('filepath/base/b')
-      FileUtils.mkdir_p('filepath/gems')
+  describe 'popping up the documentation' do
+    context 'when installing from the file system' do
+      before do
+        # set up files for copying
+        FileUtils.mkdir_p('filepath/base')
+        FileUtils.touch('filepath/base/a')
+        FileUtils.touch('filepath/base/b')
+        FileUtils.mkdir_p('filepath/gems')
+      end
+
+      it 'should not pop it up when the user specified not to pop it up' do
+        @installer.doc_popup = false
+        dont_allow(@installer).popup_documentation
+        @installer.install_from_file_system 'filepath'
+      end
+
+      it 'should pop it up when the user did not specify to not pop it up' do
+        mock(@installer).popup_documentation
+        @installer.install_from_file_system 'filepath'
+      end
     end
 
-    it 'should not pop it up when the user specified not to pop it up' do
-      @installer.doc_popup = false
-      dont_allow(@installer).popup_documentation
-      @installer.install_from_file_system 'filepath'
-    end
+    context 'when installing from a code' do
+      before do
+        stub(@installer).check_vcs_status { nil }
+        stub(@installer).check_installer_version { nil }
+        stub(@installer).rails_version { Gem::Version.new(3.1) }
+        FileUtils.touch("Gemfile.lock")
+      end
 
-    it 'should pop it up when the user did not specify to not pop it up' do
-      mock(@installer).popup_documentation
-      @installer.install_from_file_system 'filepath'
+      it 'should not pop it up when the user specified not to pop it up' do
+        @installer.doc_popup = false
+        any_instance_of(Railsthemes::ThemeInstaller) do |ti|
+          mock(ti).install_from_server 'code'
+        end
+        dont_allow(@installer).popup_documentation
+        @installer.install_from_code 'code'
+      end
+
+      it 'should pop it up when the user did not specify to not pop it up' do
+        any_instance_of(Railsthemes::ThemeInstaller) do |ti|
+          mock(ti).install_from_server 'code'
+        end
+        mock(@installer).popup_documentation
+        @installer.install_from_code 'code'
+      end
     end
   end
 

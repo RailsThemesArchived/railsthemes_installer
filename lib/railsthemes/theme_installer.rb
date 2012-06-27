@@ -120,7 +120,7 @@ module Railsthemes
       gems_that_we_can_install = Dir.entries("#{source_filepath}/gems").reject{|x| x == '.' || x == '..'}
       logger.debug "gems_that_we_can_install: #{gems_that_we_can_install * ' '}"
       (gem_names & gems_that_we_can_install).each do |gem_name|
-        gem_src = File.join(source_filepath, 'gems', gem_name, '.')
+        gem_src = File.join(source_filepath, 'gems', gem_name)
         logger.debug("copying gems from #{gem_src}")
         Dir["#{gem_src}/**/*"].each do |src|
           logger.debug "src: #{src}"

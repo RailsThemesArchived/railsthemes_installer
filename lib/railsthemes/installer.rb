@@ -65,6 +65,8 @@ module Railsthemes
         else
           if File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
             @theme_installer.install_from_server code
+            print_post_installation_instructions
+            popup_documentation if @doc_popup
           else
             ask_to_install_unsupported code
           end
