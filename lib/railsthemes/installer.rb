@@ -10,6 +10,8 @@ require 'launchy'
 
 module Railsthemes
   class Installer
+    include Railsthemes::Logging
+
     def initialize
       @doc_popup = true
       @theme_installer = ThemeInstaller.new
@@ -20,13 +22,13 @@ module Railsthemes
     end
 
     def verbose
-      Railsthemes.logger.level = Logger::INFO
-      Railsthemes.logger.info 'In verbose mode.'
+      logger.level = Logger::INFO
+      logger.info 'In verbose mode.'
     end
 
     def debug
-      Railsthemes.logger.level = Logger::DEBUG
-      Railsthemes.logger.debug 'In debug mode.'
+      logger.level = Logger::DEBUG
+      logger.debug 'In debug mode.'
     end
 
     def ensure_in_rails_root
@@ -37,7 +39,7 @@ module Railsthemes
 
     def popup_documentation
       style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
-      Railsthemes.logger.debug("style_guide: #{style_guide}")
+      logger.debug("style_guide: #{style_guide}")
       Launchy.open(style_guide) if style_guide
     end
 
@@ -49,15 +51,15 @@ module Railsthemes
     end
 
     def download_from_code code
-      Railsthemes.logger.warn "Checking version control..."
+      logger.warn "Checking version control..."
       vcs_is_unclean_message = check_vcs_status
-      Railsthemes.logger.warn "Done checking version control."
+      logger.warn "Done checking version control."
       if vcs_is_unclean_message
         Safe.log_and_abort vcs_is_unclean_message
       else
-        Railsthemes.logger.warn "Checking installer version..."
+        logger.warn "Checking installer version..."
         version_is_bad_message = check_installer_version
-        Railsthemes.logger.warn "Done checking installer version."
+        logger.warn "Done checking installer version."
         if version_is_bad_message
           Safe.log_and_abort version_is_bad_message
         else
@@ -72,16 +74,16 @@ module Railsthemes
 
     def check_installer_version
       url = Railsthemes.server + '/installer/version'
-      Railsthemes.logger.debug "installer version url: #{url}"
+      logger.debug "installer version url: #{url}"
       begin
         response = Utils.get_url url
       rescue SocketError => e
-        Railsthemes.logger.info e.message
-        Railsthemes.logger.info e.backtrace * "\n"
+        logger.info e.message
+        logger.info e.backtrace * "\n"
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
-        Railsthemes.logger.info e.message
-        Railsthemes.logger.info e.backtrace * "\n"
+        logger.info e.message
+        logger.info e.backtrace * "\n"
       end
 
       if response && response.code.to_s == '200'
@@ -96,7 +98,7 @@ module Railsthemes
           Recommended version: #{server_recommended_version_string}
           EOS
         else
-          Railsthemes.logger.debug "server recommended version: #{server_recommended_version_string}"
+          logger.debug "server recommended version: #{server_recommended_version_string}"
           nil
         end
       else
@@ -105,22 +107,22 @@ module Railsthemes
     end
 
     def ask_to_install_unsupported code
-      Railsthemes.logger.warn "WARNING\n"
+      logger.warn "WARNING\n"
 
       if File.exists?('Gemfile.lock')
-        Railsthemes.logger.warn <<-EOS
+        logger.warn <<-EOS
 Your Gemfile.lock file indicates that you are using a version of Rails that
 is not officially supported by RailsThemes.
         EOS
       else
-        Railsthemes.logger.warn <<-EOS
+        logger.warn <<-EOS
 We could not find a Gemfile.lock file in this directory. This could indicate
 that you are not in a Rails application, or that you are not using Bundler
 (which probably means that you are using a version of Rails that is not
 officially supported by RailsThemes.)
         EOS
       end
-      Railsthemes.logger.warn <<-EOS
+      logger.warn <<-EOS
 While Rails applications that are less than version 3.1 are not officially
 supported, you can try installing anyway, or can stop. If you cancel the
 install before downloading, we can refund your purchase. If you install,
@@ -163,7 +165,7 @@ but which may be more complicated.
 
     def print_post_installation_instructions
       number = 0
-      Railsthemes.logger.warn <<-EOS
+      logger.warn <<-EOS
 
 Yay! Your theme is installed!
 

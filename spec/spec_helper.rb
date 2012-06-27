@@ -53,8 +53,8 @@ def stub_tempdir
 end
 
 def setup_logger
-  @logger = Logger.new(LOGFILE_NAME)
-  @logger.info "#{self.example.description}"
-  Railsthemes.logger = @logger
-  @logger
+  logger = Logger.new(LOGFILE_NAME)
+  logger.info "#{self.example.description}"
+  Railsthemes::Logging.logger = logger
+  logger
 end

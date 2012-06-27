@@ -4,6 +4,7 @@ require 'railsthemes/os'
 
 module Railsthemes
   class Utils
+    include Railsthemes::Logging
 
     # remove file only if it exists
     def self.remove_file filepath
@@ -70,7 +71,7 @@ module Railsthemes
     # needs tests
     def self.generate_tempdir_name
       tempdir = File.join(Dir.tmpdir, DateTime.now.strftime("railsthemes-%Y%m%d-%H%M%S-#{rand(100000000)}"))
-      Railsthemes.logger.debug "tempdir: #{tempdir}"
+      logger.debug "tempdir: #{tempdir}"
       tempdir
     end
 

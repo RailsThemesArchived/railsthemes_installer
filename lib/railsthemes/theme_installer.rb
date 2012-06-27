@@ -1,7 +1,9 @@
 module Railsthemes
   class ThemeInstaller
+    include Railsthemes::Logging
+
     def install_from_server code
-      Railsthemes.logger.warn "Downloading theme from server..."
+      logger.warn "Downloading theme from server..."
       Utils.with_tempdir do |tempdir|
         archive = File.join(tempdir, 'archive.tar.gz')
         if File.exists?('Gemfile.lock')
@@ -11,7 +13,7 @@ module Railsthemes
         dl_url = get_download_url "#{Railsthemes.server}/download?code=#{code}&config=#{config}"
         if dl_url
           Utils.download_file_to dl_url, archive
-          Railsthemes.logger.warn "Finished downloading."
+          logger.warn "Finished downloading."
           install_from_archive archive
         else
           Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It should look something like your@email.com:ABCDEF.")
@@ -20,12 +22,12 @@ module Railsthemes
     end
 
     def install_from_archive filepath
-      Railsthemes.logger.warn "Extracting..."
+      logger.warn "Extracting..."
       Railsthemes::Utils.with_tempdir do |tempdir|
         io = Tar.ungzip(File.open(filepath, 'rb'))
         Tar.untar(io, tempdir)
 
-        Railsthemes.logger.warn "Finished extracting."
+        logger.warn "Finished extracting."
         install_from_file_system tempdir
       end
     end
@@ -37,8 +39,8 @@ module Railsthemes
       rescue SocketError => e
         Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'
       rescue Exception => e
-        Railsthemes.logger.info e.message
-        Railsthemes.logger.info e.backtrace
+        logger.info e.message
+        logger.info e.backtrace
       end
     end
 
@@ -55,8 +57,8 @@ module Railsthemes
       rescue SocketError => e
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
-        Railsthemes.logger.info e.message
-        Railsthemes.logger.info e.backtrace
+        logger.info e.message
+        logger.info e.backtrace
       end
 
       if response && response.code.to_s == '200'
@@ -70,25 +72,25 @@ module Railsthemes
       source_filepath = original_source_filepath.gsub(/\\/, '/')
       if File.directory?(source_filepath)
 
-        Railsthemes.logger.warn 'Installing...'
+        logger.warn 'Installing...'
 
         # this file causes issues when HAML is also present, and we overwrite
         # it in the ERB case, so safe to delete here
-        Railsthemes.logger.debug 'removing file app/views/layouts/application.html.erb'
+        logger.debug 'removing file app/views/layouts/application.html.erb'
         Utils.remove_file('app/views/layouts/application.html.erb')
 
-        Railsthemes.logger.debug "source_filepath: #{source_filepath}"
+        logger.debug "source_filepath: #{source_filepath}"
         Dir["#{source_filepath}/base/**/*"].each do |src|
-          Railsthemes.logger.debug "src: #{src}"
+          logger.debug "src: #{src}"
           dest = src.sub("#{source_filepath}/base/", '')
-          Railsthemes.logger.debug "dest: #{dest}"
+          logger.debug "dest: #{dest}"
           if File.directory?(src)
-            Railsthemes.logger.debug "mkdir -p #{dest}"
+            logger.debug "mkdir -p #{dest}"
             FileUtils.mkdir_p(dest)
           else
             unless (dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)) ||
                 src =~ /\/\./ # remove any pesky hidden files that crept into the archive
-              Railsthemes.logger.debug "cp #{src} #{dest}"
+              logger.debug "cp #{src} #{dest}"
               FileUtils.cp(src, dest)
             end
           end
@@ -97,7 +99,7 @@ module Railsthemes
         gem_names = Utils.gemspecs(Utils.read_file('Gemfile.lock')).map(&:name) - ['haml', 'sass']
         install_gems_from(source_filepath, gem_names)
 
-        Railsthemes.logger.warn 'Done installing.'
+        logger.warn 'Done installing.'
 
         post_copying_changes
       elsif Railsthemes::Utils.archive?(source_filepath)
@@ -114,22 +116,22 @@ module Railsthemes
 
     def install_gems_from source_filepath, gem_names
       return unless File.directory?("#{source_filepath}/gems")
-      Railsthemes.logger.debug "gem_names: #{gem_names * ' '}"
+      logger.debug "gem_names: #{gem_names * ' '}"
       gems_that_we_can_install = Dir.entries("#{source_filepath}/gems").reject{|x| x == '.' || x == '..'}
-      Railsthemes.logger.debug "gems_that_we_can_install: #{gems_that_we_can_install * ' '}"
+      logger.debug "gems_that_we_can_install: #{gems_that_we_can_install * ' '}"
       (gem_names & gems_that_we_can_install).each do |gem_name|
         gem_src = File.join(source_filepath, 'gems', gem_name, '.')
-        Railsthemes.logger.debug("copying gems from #{gem_src}")
+        logger.debug("copying gems from #{gem_src}")
         Dir["#{gem_src}/**/*"].each do |src|
-          Railsthemes.logger.debug "src: #{src}"
+          logger.debug "src: #{src}"
           dest = src.sub("#{source_filepath}/gems/#{gem_name}/", '')
-          Railsthemes.logger.debug "dest: #{dest}"
+          logger.debug "dest: #{dest}"
           if File.directory?(src)
-            Railsthemes.logger.debug "mkdir -p #{dest}"
+            logger.debug "mkdir -p #{dest}"
             FileUtils.mkdir_p(dest)
           else
             unless src =~ /\/\./ # remove any pesky hidden files that crept into the archive
-              Railsthemes.logger.debug "cp #{src} #{dest}"
+              logger.debug "cp #{src} #{dest}"
               FileUtils.cp(src, dest)
             end
           end
@@ -140,17 +142,17 @@ module Railsthemes
     # this happens after a successful copy so that we set up the environment correctly
     # for people to view the theme correctly
     def post_copying_changes
-      Railsthemes.logger.info "Removing public/index.html"
+      logger.info "Removing public/index.html"
       Utils.remove_file File.join('public', 'index.html')
       create_railsthemes_demo_pages
     end
 
     def create_railsthemes_demo_pages
-      Railsthemes.logger.warn 'Creating RailsThemes demo pages...'
+      logger.warn 'Creating RailsThemes demo pages...'
 
-      Railsthemes.logger.debug "mkdir -p app/controllers"
+      logger.debug "mkdir -p app/controllers"
       FileUtils.mkdir_p(File.join('app', 'controllers'))
-      Railsthemes.logger.debug "writing to app/controllers/railsthemes_controller.rb"
+      logger.debug "writing to app/controllers/railsthemes_controller.rb"
       File.open(File.join('app', 'controllers', 'railsthemes_controller.rb'), 'w') do |f|
         f.write <<-EOS
 class RailsthemesController < ApplicationController
@@ -188,7 +190,7 @@ end
         end
       end
 
-      Railsthemes.logger.warn 'Done creating RailsThemes demo pages.'
+      logger.warn 'Done creating RailsThemes demo pages.'
     end
 
   end
