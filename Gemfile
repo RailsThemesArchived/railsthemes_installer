@@ -1,10 +1,10 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in railsthemes.gemspec
 gemspec
 gem 'thor'
 gem 'rest-client'
 gem 'launchy'
+# make sure you add any new dependencies in railsthemes.gemspec
 
 group :development do
   gem 'gem-release'
