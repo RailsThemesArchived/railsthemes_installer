@@ -17,4 +17,5 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "thor"
   gem.add_dependency "rest-client"
+  gem.add_dependency "launchy"
 end
