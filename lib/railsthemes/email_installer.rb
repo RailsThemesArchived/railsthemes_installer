@@ -6,6 +6,12 @@ module Railsthemes
       include Railsthemes::Logging
       include Thor::Actions
 
+      def test_thor
+        create_file 'thor_test' do
+          'THOR!!!'
+        end
+      end
+
       def install_from_file_system original_source_filepath
         source_filepath = original_source_filepath.gsub(/\\/, '/')
         if File.directory?(source_filepath)
@@ -79,37 +85,6 @@ EOS
           end
         end
 
-        create_file File.join('app', 'mailers', 'railsthemes_mailer.rb') do
-          <<-EOS
-class RailsthemesMailer < ActionMailer::Base
-  layout 'railsthemes_mailer'
-
-  def test_email options = {}
-    mail(:from => "anthony@railsthemes.com", :content_type => "text/html", :to => options[:to])
-  end
-end
-EOS
-        end
-
-        create_file File.join('app', 'views', 'railsthemes', 'email.html.erb') do
-          <<-EOS
-<%= form_tag('/railsthemes/send_email') do |f| %>
-  <div><%= label_tag 'email', 'Email to send to' %></div>
-  <div><%= email_field_tag 'email' %></div>
-  <div><%= submit_tag 'Send' %></div>
-<% end %>
-EOS
-
-        end
-
-        filename = File.join 'app', 'views', 'railsthemes_mailer', 'test_email.html.erb'
-        create_file filename do
-          "This text lives at #{filename}, the rest is taken care of by layouts!"
-        end
-
-        create_file File.join 'app', 'views', 'railsthemes', 'sent_email.html.erb' do
-          "Sent the email to <%= params[:email] %>"
-        end
       end
     end
   end
