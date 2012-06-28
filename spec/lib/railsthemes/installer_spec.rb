@@ -42,17 +42,13 @@ describe Railsthemes::Installer do
 
       it 'should not pop it up when the user specified not to pop it up' do
         @installer.doc_popup = false
-        any_instance_of(Railsthemes::ThemeInstaller) do |ti|
-          mock(ti).install_from_server 'code'
-        end
+        mock(@installer.theme_installer).install_from_server('code')
         dont_allow(@installer).popup_documentation
         @installer.install_from_code 'code'
       end
 
       it 'should pop it up when the user did not specify to not pop it up' do
-        any_instance_of(Railsthemes::ThemeInstaller) do |ti|
-          mock(ti).install_from_server 'code'
-        end
+        mock(@installer.theme_installer).install_from_server('code')
         mock(@installer).popup_documentation
         @installer.install_from_code 'code'
       end
@@ -105,9 +101,7 @@ describe Railsthemes::Installer do
 
     it 'should continue if the user wants to continue' do
       mock(Railsthemes::Safe).yes?(/wish to install/) { true }
-      any_instance_of(Railsthemes::ThemeInstaller) do |ti|
-        mock(ti).install_from_server('code')
-      end
+      mock(@installer.theme_installer).install_from_server('code')
       @installer.ask_to_install_unsupported 'code'
     end
   end
@@ -146,10 +140,8 @@ describe Railsthemes::Installer do
       mock(@installer).check_vcs_status
       mock(@installer).check_installer_version
       mock(@installer).rails_version { Gem::Version.new('3.1.0') }
-      any_instance_of(Railsthemes::ThemeInstaller) do |ti|
-        mock(ti).install_from_server 'thecode'
-      end
-      @installer.install_from_code 'thecode'
+      mock(@installer.theme_installer).install_from_server('code')
+      @installer.install_from_code 'code'
     end
   end
 

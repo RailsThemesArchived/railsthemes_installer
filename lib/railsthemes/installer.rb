@@ -17,7 +17,6 @@ module Railsthemes
 
       def initialize
         @doc_popup = true
-        @theme_installer = ThemeInstaller.new
       end
 
       def doc_popup= doc_popup
@@ -34,6 +33,16 @@ module Railsthemes
         logger.debug 'In debug mode.'
       end
 
+      def theme_installer
+        @theme_installer ||= ThemeInstaller.new
+        @theme_installer
+      end
+
+      def email_installer
+        @email_installer ||= EmailInstaller.new
+        @email_installer
+      end
+
       def ensure_in_rails_root
         unless File.directory?('app') && File.directory?('public')
           Safe.log_and_abort 'Must be in the Rails root directory to use this gem.'
@@ -48,7 +57,7 @@ module Railsthemes
 
       def install_from_file_system original_source_filepath
         ensure_in_rails_root
-        @theme_installer.install_from_file_system original_source_filepath
+        theme_installer.install_from_file_system original_source_filepath
         print_post_installation_instructions
         popup_documentation if @doc_popup
       end
@@ -67,7 +76,7 @@ module Railsthemes
             Safe.log_and_abort version_is_bad_message
           else
             if File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
-              @theme_installer.install_from_server code
+              theme_installer.install_from_server code
               print_post_installation_instructions
               popup_documentation if @doc_popup
             else
@@ -137,7 +146,7 @@ but which may be more complicated.
         EOS
 
         if Safe.yes? 'Do you still wish to install the theme? [y/N]'
-          @theme_installer.install_from_server code
+          theme_installer.install_from_server code
         else
           Safe.log_and_abort 'Halting.'
         end
