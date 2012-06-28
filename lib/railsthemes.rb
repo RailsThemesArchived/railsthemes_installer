@@ -5,6 +5,7 @@ require 'railsthemes/utils'
 require 'railsthemes/tar'
 require 'railsthemes/installer'
 require 'railsthemes/theme_installer'
+require 'railsthemes/email_installer'
 
 module Railsthemes
   def self.server
