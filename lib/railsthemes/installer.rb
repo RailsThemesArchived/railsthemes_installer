@@ -60,8 +60,10 @@ module Railsthemes
         filepath = File.join(original_source_filepath, config.join('-'))
         if File.directory?(filepath)
           theme_installer.install_from_file_system filepath
-        else
+        elsif File.exists?(filepath + '.tar.gz')
           theme_installer.install_from_file_system filepath + '.tar.gz'
+        else
+          Safe.log_and_abort "Could not find the file you need: #{filepath}"
         end
 
         print_post_installation_instructions
