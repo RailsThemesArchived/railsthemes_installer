@@ -58,3 +58,14 @@ def setup_logger
   Railsthemes::Logging.logger = logger
   logger
 end
+
+def with_installer_version version, &block
+  old_version = Railsthemes::VERSION
+  Railsthemes.send(:remove_const, 'VERSION')
+  Railsthemes.const_set('VERSION', version)
+
+  block.call
+
+  Railsthemes.send(:remove_const, 'VERSION')
+  Railsthemes.const_set('VERSION', old_version)
+end

@@ -13,8 +13,8 @@ module Railsthemes
           if File.exists?('Gemfile.lock')
             send_gemfile code # first time hitting the server
           end
-          config = get_primary_configuration(Utils.read_file('Gemfile.lock'))
-          dl_url = get_download_url "#{Railsthemes.server}/download?code=#{code}&config=#{config}"
+          config = Utils.get_primary_configuration(Utils.read_file('Gemfile.lock'))
+          dl_url = get_download_url "#{Railsthemes.server}/download?code=#{code}&config=#{config * ','}"
           if dl_url
             Utils.download_file_to dl_url, archive
             logger.warn "Finished downloading."
@@ -44,12 +44,6 @@ module Railsthemes
         end
       end
 
-      def get_primary_configuration gemfile_contents
-        gem_names = Utils.gemspecs(gemfile_contents).map(&:name)
-        (gem_names.include?('haml') ? 'haml' : 'erb') + ',' +
-        (gem_names.include?('sass') ? 'scss' : 'css')
-      end
-
       def get_download_url server_request_url
         response = nil
         begin
@@ -71,7 +65,53 @@ module Railsthemes
       def install_from_file_system original_source_filepath
         source_filepath = original_source_filepath.gsub(/\\/, '/')
         if File.directory?(source_filepath)
+          logger.warn 'Installing...'
 
+          # this file causes issues when HAML is also present, and we overwrite
+          # it in the ERB case, so safe to delete here
+          logger.debug 'removing file app/views/layouts/application.html.erb'
+          Utils.remove_file('app/views/layouts/application.html.erb')
+
+          logger.debug "source_filepath: #{source_filepath}"
+          Dir["#{source_filepath}/base/**/*"].each do |src|
+            logger.debug "src: #{src}"
+            dest = src.sub("#{source_filepath}/base/", '')
+            logger.debug "dest: #{dest}"
+            if File.directory?(src)
+              unless File.directory?(dest)
+                logger.debug "mkdir -p #{dest}"
+                FileUtils.mkdir_p(dest)
+              end
+            else
+              unless (dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)) ||
+                  src =~ /\/\./ # remove any pesky hidden files that crept into the archive
+                logger.debug "cp #{src} #{dest}"
+                FileUtils.cp(src, dest)
+              end
+            end
+          end
+
+          gem_names = Utils.gemspecs(Utils.read_file('Gemfile.lock')).map(&:name) - ['haml', 'sass']
+          install_gems_from(source_filepath, gem_names)
+
+          logger.warn 'Done installing.'
+
+          post_copying_changes
+        elsif Railsthemes::Utils.archive?(source_filepath)
+          if File.exists?(source_filepath)
+            install_from_archive source_filepath
+            # no need for post_installation, because we will do this in install_from_archive
+          else
+            Safe.log_and_abort 'Cannot find the file you specified.'
+          end
+        else
+          Safe.log_and_abort 'Need to specify either a directory or an archive file when --file is used.'
+        end
+      end
+
+      def self.install_from_file_system original_source_filepath
+        source_filepath = original_source_filepath.gsub(/\\/, '/')
+        if File.directory?(source_filepath)
           logger.warn 'Installing...'
 
           # this file causes issues when HAML is also present, and we overwrite

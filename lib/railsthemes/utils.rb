@@ -89,5 +89,11 @@ module Railsthemes
       Tar.untar(io, extract_to)
       logger.warn "Finished extracting."
     end
+
+    def self.get_primary_configuration gemfile_contents
+      gem_names = gemspecs(gemfile_contents).map(&:name)
+      [(gem_names.include?('haml') ? 'haml' : 'erb'),
+       (gem_names.include?('sass') ? 'scss' : 'css')]
+    end
   end
 end

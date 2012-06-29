@@ -6,6 +6,8 @@ describe Railsthemes::ThemeInstaller do
     setup_logger
     @installer = Railsthemes::ThemeInstaller.new
     @tempdir = stub_tempdir
+
+    # would be interesting to see if we still need these
     FileUtils.touch('Gemfile.lock')
   end
 
@@ -19,7 +21,7 @@ describe Railsthemes::ThemeInstaller do
         FakeWeb.register_uri :get,
           /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
           :body => 'auth_url'
-        mock(@installer).get_primary_configuration('') { 'haml,scss' }
+        mock(Railsthemes::Utils).get_primary_configuration('') { ['haml', 'scss'] }
         mock(Railsthemes::Utils).download_file_to('auth_url', "#{@tempdir}/archive.tar.gz")
         mock(@installer).install_from_archive "#{@tempdir}/archive.tar.gz"
         @installer.install_from_server 'panozzaj@gmail.com:code'
@@ -29,7 +31,7 @@ describe Railsthemes::ThemeInstaller do
         FakeWeb.register_uri :get,
           'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
           :body => '', :status => ['401', 'Unauthorized']
-        mock(@installer).get_primary_configuration('') { '' }
+        mock(Railsthemes::Utils).get_primary_configuration('') { [] }
         mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
         @installer.install_from_server 'panozzaj@gmail.com:code'
       end
@@ -39,7 +41,7 @@ describe Railsthemes::ThemeInstaller do
   describe :install_from_archive do
     # does not work on Windows, NotImplementedError in tar module
     it 'should extract and then install from that extracted directory' do
-      filename = 'spec/fixtures/blank-assets.tar.gz'
+      filename = 'spec/fixtures/blank-assets-archived/erb-css.tar.gz'
       FakeFS::FileSystem.clone(filename)
       mock(@installer).install_from_file_system @tempdir
       @installer.install_from_archive filename
@@ -66,32 +68,6 @@ describe Railsthemes::ThemeInstaller do
       FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
         :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
       @installer.send_gemfile('panozzaj@gmail.com:code')
-    end
-  end
-
-  describe '#get_primary_configuration' do
-    it 'should give erb,css when there is no Gemfile' do
-      @installer.get_primary_configuration('').should == 'erb,css'
-    end
-
-    it 'should give haml,scss when haml and sass are in the Gemfile' do
-      gemfile = using_gems 'haml', 'sass'
-      @installer.get_primary_configuration(gemfile).should == 'haml,scss'
-    end
-
-    it 'should give haml,css when sass is not in the Gemfile but haml is' do
-      gemfile = using_gems 'haml'
-      @installer.get_primary_configuration(gemfile).should == 'haml,css'
-    end
-
-    it 'should give erb,scss when haml is not in the gemfile but sass is' do
-      gemfile = using_gems 'sass'
-      @installer.get_primary_configuration(gemfile).should == 'erb,scss'
-    end
-
-    it 'should give erb,css when haml and sass are not in the gemfile' do
-      gemfile = using_gems
-      @installer.get_primary_configuration(gemfile).should == 'erb,css'
     end
   end
 
@@ -237,10 +213,47 @@ end
     it 'should install the gems that we specify that match' do
       FakeFS::FileSystem.clone('spec/fixtures/blank-assets')
       # we only know about formtastic and simple_form in the gems directory
-      @installer.install_gems_from("spec/fixtures/blank-assets", ['formtastic', 'kaminari'])
+      @installer.install_gems_from("spec/fixtures/blank-assets/erb-css", ['formtastic', 'kaminari'])
       File.should exist('app/assets/stylesheets/formtastic.css.scss')
       File.should_not exist('app/assets/stylesheets/kaminari.css.scss')
       File.should_not exist('app/assets/stylesheets/simple_form.css.scss')
+    end
+  end
+
+  describe 'end to end operation' do
+    def verify_end_to_end_operation
+      ['app/assets/images/image1.png',
+       'app/assets/images/bg/sprite.png',
+       'app/assets/javascripts/jquery.dataTables.js',
+       'app/assets/javascripts/scripts.js.erb',
+       'app/assets/stylesheets/style.css.erb',
+       'app/views/layouts/_interior_sidebar.html.erb',
+       'app/views/layouts/application.html.erb',
+       'app/views/layouts/homepage.html.erb'].each do |filename|
+         File.should exist(filename), "#{filename} was not present"
+      end
+      File.open('app/assets/stylesheets/style.css.erb').each do |line|
+        line.should match /style.css.erb/
+      end
+    end
+
+    before do
+      stub(@installer).post_copying_changes
+      FakeFS::FileSystem.clone('spec/fixtures')
+      # should add some gems to the gemfile here and test gem installation
+    end
+
+    it 'should extract correctly from directory' do
+      filename = 'spec/fixtures/blank-assets/erb-css'
+      @installer.install_from_file_system filename
+      verify_end_to_end_operation
+    end
+
+    # does not work on Windows, NotImplementedError in tar module
+    it 'should extract correctly from archive' do
+      filename = 'spec/fixtures/blank-assets-archived/erb-css.tar.gz'
+      @installer.install_from_file_system filename
+      verify_end_to_end_operation
     end
   end
 

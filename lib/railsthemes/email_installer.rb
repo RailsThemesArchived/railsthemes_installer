@@ -6,11 +6,11 @@ module Railsthemes
       include Railsthemes::Logging
       include Thor::Actions
 
-      def test_thor
-        create_file 'thor_test' do
-          'THOR!!!'
-        end
-      end
+      #def test_thor
+      #  create_file 'thor_test' do
+      #    'THOR!!!'
+      #  end
+      #end
 
       def install_from_file_system original_source_filepath
         source_filepath = original_source_filepath.gsub(/\\/, '/')
@@ -35,23 +35,6 @@ module Railsthemes
               end
             end
           end
-        end
-
-        # super-hacky, should install the theme first or create a new controller by hand
-        File.open(File.join('app', 'controllers', 'railsthemes_controller.rb'), 'w') do |f|
-          f.write <<-EOS
-class RailsthemesController < ApplicationController
-  # normally every view will use your application layout
-  def inner
-    render :layout => 'application'
-  end
-
-  # this is a special layout for landing and home pages
-  def landing
-    render :layout => 'landing'
-  end
-end
-          EOS
         end
 
         inject_into_file File.join('app', 'controllers', 'railsthemes_controller.rb'), :after => 'class RailsthemesController < ApplicationController' do
