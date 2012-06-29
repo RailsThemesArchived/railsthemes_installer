@@ -7,13 +7,10 @@ module Railsthemes
     # checks if we can cleanly install into the current working directory
     def self.ensure_clean_install_possible
       ensure_in_rails_root
-      logger.warn "Checking version control..."
       ensure_vcs_is_clean
-      logger.warn "Done checking version control."
+      ensure_bundle_is_up_to_date
       ensure_rails_version_is_valid
-      logger.warn "Checking installer version..."
       ensure_installer_is_up_to_date
-      logger.warn "Done checking installer version."
     end
 
     def self.ensure_in_rails_root
@@ -23,6 +20,7 @@ module Railsthemes
     end
 
     def self.ensure_vcs_is_clean
+      logger.warn "Checking version control..."
       result = ''
       variety = ''
       if File.directory?('.git')
@@ -44,6 +42,7 @@ module Railsthemes
 Please roll back or commit the changes before proceeding to ensure that you can roll back after installing if you want.
         EOS
       end
+      logger.warn "Done checking version control."
     end
 
     def self.ensure_rails_version_is_valid
@@ -53,6 +52,7 @@ Please roll back or commit the changes before proceeding to ensure that you can 
     end
 
     def self.ensure_installer_is_up_to_date
+      logger.warn "Checking installer version..."
       url = Railsthemes.server + '/installer/version'
       logger.debug "installer version url: #{url}"
       begin
@@ -83,6 +83,7 @@ EOS
       else
         Safe.log_and_abort 'There was an issue checking your installer version.'
       end
+      logger.warn "Done checking installer version."
     end
 
     def self.ask_to_install_unsupported
@@ -113,6 +114,19 @@ but which may be more complicated.
       unless Safe.yes? 'Do you still wish to install the theme? [y/N]'
         Safe.log_and_abort 'Halting.'
       end
+    end
+
+    def self.ensure_bundle_is_up_to_date
+      logger.warn "Checking bundle..."
+      result = Safe.system_call('bundle check')
+      if result !~ /The Gemfile's dependencies are satisfied/
+        Safe.log_and_abort <<-EOS
+Running `bundle check` resulted in the following issues:
+#{result}
+Please run `bundle` and try installing again.
+EOS
+      end
+      logger.warn "Done checking bundle."
     end
 
     def self.rails_version gemfile_contents = nil

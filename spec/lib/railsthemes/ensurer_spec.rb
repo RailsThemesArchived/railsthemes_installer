@@ -136,17 +136,6 @@ describe Railsthemes::Ensurer do
     end
   end
 
-  describe :ensure_clean_install_possible do
-    it 'should check various things' do
-      mock(Railsthemes::Ensurer).ensure_in_rails_root
-      mock(Railsthemes::Ensurer).ensure_vcs_is_clean
-      mock(Railsthemes::Ensurer).ensure_rails_version_is_valid
-      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date
-      Railsthemes::Ensurer.ensure_clean_install_possible
-    end
-  end
-
-
   describe '#ensure_rails_version_is_valid' do
     it 'should ask the user if they still want to install when the gemfile does not exist' do
       stub(Railsthemes::Ensurer).rails_version { Gem::Version.new('3.2.0') }
@@ -173,5 +162,19 @@ describe Railsthemes::Ensurer do
     end
   end
 
+  describe :ensure_bundle_is_up_to_date do
+    it 'should not log message and abort if the bundle is up to date' do
+      mock(Railsthemes::Safe).system_call('bundle check') { "The Gemfile's dependencies are satisfied" }
+      dont_allow(Railsthemes::Safe).log_and_abort(anything)
+      Railsthemes::Ensurer.ensure_bundle_is_up_to_date
+
+    end
+
+    it 'should log message and abort if the bundle is not up to date' do
+      mock(Railsthemes::Safe).system_call('bundle check') { 'test not up to date' }
+      mock(Railsthemes::Safe).log_and_abort(/test not up to date/)
+      Railsthemes::Ensurer.ensure_bundle_is_up_to_date
+    end
+  end
 
 end
