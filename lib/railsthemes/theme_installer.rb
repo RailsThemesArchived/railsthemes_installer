@@ -164,26 +164,11 @@ end
           EOS
         end
 
-        lines = []
-        if File.exists?(File.join('config', 'routes.rb'))
-          lines = Utils.read_file('config/routes.rb').split("\n")
-          last = lines.pop
-          if lines.grep(/railsthemes#landing/).empty?
-            lines << "  match 'railsthemes/landing' => 'railsthemes#landing'"
-          end
-          if lines.grep(/railsthemes#inner/).empty?
-            lines << "  match 'railsthemes/inner' => 'railsthemes#inner'"
-          end
-          if lines.grep(/railsthemes#jquery_ui/).empty?
-            lines << "  match 'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'"
-          end
-          lines << last
-          File.open(File.join('config', 'routes.rb'), 'w') do |f|
-            lines.each do |line|
-              f.puts line
-            end
-          end
-        end
+        Utils.conditionally_insert_routes({
+          'railsthemes/landing' => 'railsthemes#landing',
+          'railsthemes/inner' => 'railsthemes#inner',
+          'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'
+        })
 
         logger.warn 'Done creating RailsThemes demo pages.'
       end

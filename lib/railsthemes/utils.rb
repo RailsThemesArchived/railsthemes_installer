@@ -95,5 +95,23 @@ module Railsthemes
       [(gem_names.include?('haml') ? 'haml' : 'erb'),
        (gem_names.include?('sass') ? 'scss' : 'css')]
     end
+
+    def self.conditionally_insert_routes routes_hash
+      if File.exists?(File.join('config', 'routes.rb'))
+        lines = Utils.read_file('config/routes.rb').split("\n")
+        last = lines.pop
+        routes_hash.each do |first, second|
+          if lines.grep(/#{second}/).empty?
+            lines << "  match '#{first}' => '#{second}'"
+          end
+        end
+        lines << last
+        File.open(File.join('config', 'routes.rb'), 'w') do |f|
+          lines.each do |line|
+            f.puts line
+          end
+        end
+      end
+    end
   end
 end

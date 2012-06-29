@@ -36,9 +36,6 @@ EOS
   method_option :debugging,
     :desc => "Print gratuitous output on installation (for debugging).",
     :type => :boolean
-  method_option :email,
-    :desc => "",
-    :type => :boolean
   def install code_or_file
     # might be better to pass in the options directly if we get more options
     installer = Railsthemes::Installer.new
@@ -47,26 +44,17 @@ EOS
     end
 
     installer.doc_popup = !options[:no_doc_popup]
-    installer.verbose if options[:verbose]
-    installer.debug if options[:debugging]
+    Railsthemes::Logging.verbose if options[:verbose]
+    Railsthemes::Logging.debug if options[:debugging]
 
     if options[:file]
       file = code_or_file
       abort 'Please specify a file to install from' unless file
-      puts "Installing from file: #{file}."
-      if options[:email]
-        Railsthemes::EmailInstaller.new.install_from_file_system file
-      else
-        installer.install_from_file_system file
-      end
+      installer.install_from_file_system file
     else
       code = code_or_file
       abort 'Please specify a code to install from' unless code
-      if options[:email]
-        Railsthemes::EmailInstaller.new.install_from_code code
-      else
-        installer.install_from_code code
-      end
+      installer.install_from_code code
     end
   end
 

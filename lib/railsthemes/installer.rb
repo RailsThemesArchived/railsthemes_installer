@@ -23,18 +23,6 @@ module Railsthemes
         @doc_popup = doc_popup
       end
 
-      # move to main module
-      def verbose
-        logger.level = Logger::INFO
-        logger.info 'In verbose mode.'
-      end
-
-      # move to main module
-      def debug
-        logger.level = Logger::DEBUG
-        logger.debug 'In debug mode.'
-      end
-
       # can probably just make static
       def theme_installer
         @theme_installer ||= ThemeInstaller.new
@@ -64,6 +52,15 @@ module Railsthemes
           theme_installer.install_from_file_system filepath + '.tar.gz'
         else
           Safe.log_and_abort "Could not find the file you need: #{filepath}"
+        end
+
+        filepath = File.join(original_source_filepath, 'email')
+        if File.directory?(filepath)
+          email_installer.install_from_file_system filepath
+        elsif File.exists?(filepath + '.tar.gz')
+          email_installer.install_from_file_system filepath + '.tar.gz'
+        else
+          # no email to install... moving along
         end
 
         print_post_installation_instructions

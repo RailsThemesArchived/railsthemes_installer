@@ -6,16 +6,9 @@ module Railsthemes
       include Railsthemes::Logging
       include Thor::Actions
 
-      #def test_thor
-      #  create_file 'thor_test' do
-      #    'THOR!!!'
-      #  end
-      #end
-
       def install_from_file_system original_source_filepath
         source_filepath = original_source_filepath.gsub(/\\/, '/')
         if File.directory?(source_filepath)
-
           logger.warn 'Installing email theme...'
           logger.debug "source_filepath: #{source_filepath}"
 
@@ -50,24 +43,12 @@ module Railsthemes
 EOS
         end
 
-        # copy-paste, refactor
-        if File.exists?(File.join('config', 'routes.rb'))
-          lines = Utils.read_file('config/routes.rb').split("\n")
-          last = lines.pop
-          if lines.grep(/railsthemes#email/).empty?
-            lines << "  match 'railsthemes/email' => 'railsthemes#email'"
-          end
-          if lines.grep(/railsthemes#send_email/).empty?
-            lines << "  match 'railsthemes/send_email' => 'railsthemes#send_email'"
-          end
-          lines << last
-          File.open(File.join('config', 'routes.rb'), 'w') do |f|
-            lines.each do |line|
-              f.puts line
-            end
-          end
-        end
+        Utils.conditionally_insert_routes({
+          'railsthemes/email' => 'railsthemes#email',
+          'railsthemes/send_email' => 'railsthemes#send_email'
+        })
 
+        logger.warn 'Done installing email theme.'
       end
     end
   end

@@ -21,5 +21,15 @@ module Railsthemes
     def self.logger= logger
       @logger = logger
     end
+
+    def self.verbose
+      logger.level = Logger::INFO
+      logger.info 'In verbose mode.'
+    end
+
+    def self.debug
+      logger.level = Logger::DEBUG
+      logger.debug 'In debug mode.'
+    end
   end
 end

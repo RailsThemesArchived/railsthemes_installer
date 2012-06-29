@@ -15,25 +15,42 @@ describe Railsthemes::Installer do
   describe :install_from_file_system do
     before do
       FakeFS::FileSystem.clone('spec/fixtures')
+      stub(Railsthemes::Ensurer).ensure_clean_install_possible
+      stub(Railsthemes::Utils).get_primary_configuration(anything) { ['erb', 'css'] }
     end
 
-    it 'should install the correct version of the theme present at that directory' do
-      mock(Railsthemes::Ensurer).ensure_clean_install_possible
-      mock(Railsthemes::Utils).get_primary_configuration(anything) { ['erb', 'css'] }
-      mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets/erb-css')
-      @installer.install_from_file_system 'spec/fixtures/blank-assets'
+    describe 'installing theme' do
+      before do
+        stub(@installer.email_installer).install_from_file_system(anything)
+      end
+
+      it 'should install the right theme version' do
+        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets/erb-css')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+      end
+
+      it 'should install the right theme version if it is an archive in that directory' do
+        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/erb-css.tar.gz')
+        stub(@installer.email_installer).install_from_file_system(anything)
+        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
+      end
     end
 
-    it 'should install the archive if it is in that directory' do
-      mock(Railsthemes::Ensurer).ensure_clean_install_possible
-      mock(Railsthemes::Utils).get_primary_configuration(anything) { ['erb', 'css'] }
-      mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/erb-css.tar.gz')
-      @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
+    describe 'installing email theme' do
+      before do
+        stub(@installer.theme_installer).install_from_file_system(anything)
+
+      end
+      it 'should install the email theme if present' do
+        mock(@installer.email_installer).install_from_file_system('spec/fixtures/blank-assets/email')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+      end
+
+      it 'should install the archived email theme if present' do
+        mock(@installer.email_installer).install_from_file_system('spec/fixtures/blank-assets-archived/email.tar.gz')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
+      end
     end
-
-    it 'should install the email theme if present in that directory'
-
-    it 'should install the archived email theme if present in that directory'
   end
 
   # should probably move documentation stuff to another class
@@ -42,6 +59,8 @@ describe Railsthemes::Installer do
       before do
         FakeFS::FileSystem.clone('spec/fixtures')
         stub(Railsthemes::Ensurer).ensure_clean_install_possible
+        stub(@installer.theme_installer).install_from_file_system(anything)
+        stub(@installer.email_installer).install_from_file_system(anything)
       end
 
       it 'should not pop it up when the user specified not to pop it up' do
