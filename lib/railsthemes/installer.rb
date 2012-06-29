@@ -58,7 +58,7 @@ module Railsthemes
 
         config = Utils.get_primary_configuration(Utils.read_file('Gemfile.lock'))
         filepath = File.join(original_source_filepath, config.join('-'))
-        if Dir.exists?(filepath)
+        if File.directory?(filepath)
           theme_installer.install_from_file_system filepath
         else
           theme_installer.install_from_file_system filepath + '.tar.gz'
