@@ -113,5 +113,24 @@ module Railsthemes
         end
       end
     end
+
+    def self.conditionally_install_gems *gem_names
+      if File.exists?('Gemfile')
+        lines = Utils.read_file('Gemfile').split("\n")
+        gem_names.each do |gem_name|
+          if lines.grep(/#{gem_name}/).empty?
+            lines << "  gem '#{gem_name}'"
+          end
+        end
+        File.open('Gemfile', 'w') do |f|
+          lines.each do |line|
+            f.puts line
+          end
+        end
+
+        # actually install the gems
+        Safe.system_call 'bundle'
+      end
+    end
   end
 end

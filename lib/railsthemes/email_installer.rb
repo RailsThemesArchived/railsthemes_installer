@@ -48,6 +48,8 @@ EOS
           'railsthemes/send_email' => 'railsthemes#send_email'
         })
 
+        Utils.conditionally_install_gems 'roadie'
+
         logger.warn 'Done installing email theme.'
       end
     end
