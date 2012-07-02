@@ -1,5 +1,3 @@
-require 'railsthemes'
-
 module Railsthemes
   class Ensurer
     extend Railsthemes::Logging

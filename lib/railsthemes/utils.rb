@@ -1,7 +1,3 @@
-require 'fileutils'
-require 'open-uri'
-require 'railsthemes/os'
-
 module Railsthemes
   class Utils
     extend Railsthemes::Logging
@@ -34,8 +30,12 @@ module Railsthemes
       set_https http if uri.scheme == 'https'
       path = url.gsub(%r{https?://[^/]+}, '')
       response = http.get(path)
-      File.open(save_to, 'wb') do |file|
-        file.write(response.body)
+      if response.code.to_s == '200'
+        File.open(save_to, 'wb') do |file|
+          file.write(response.body)
+        end
+      else
+        Safe.log_and_abort 'Had trouble downloading a file and cannot continue.'
       end
     end
 
@@ -87,7 +87,9 @@ module Railsthemes
     end
 
     def self.unarchive archive, extract_to
+      Safe.log_and_abort "Archive expected at #{archive}, but none exists." unless File.exist?(archive)
       logger.warn "Extracting..."
+      logger.debug "Attempting to extract #{archive}"
       io = Tar.ungzip(File.open(archive, 'rb'))
       Tar.untar(io, extract_to)
       logger.warn "Finished extracting."

@@ -41,4 +41,14 @@ describe Railsthemes::Utils do
       Railsthemes::Utils.get_primary_configuration(gemfile).should == ['erb', 'css']
     end
   end
+
+  describe 'download' do
+    it 'should log and abort if file not found at url' do
+      FakeWeb.register_uri :get,
+        'http://example.com/something',
+        :body => 'some random stuff', :status => ['404', 'Not Found']
+      mock(Railsthemes::Safe).log_and_abort /trouble/
+      Railsthemes::Utils.download(:url => 'http://example.com/something', :save_to => 'whatever')
+    end
+  end
 end

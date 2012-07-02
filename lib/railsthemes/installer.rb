@@ -1,8 +1,3 @@
-require 'rubygems'
-require 'bundler'
-require 'fileutils'
-require 'launchy'
-
 module Railsthemes
   class Installer < Thor
     no_tasks do
@@ -66,7 +61,7 @@ module Railsthemes
       def install_from_code code
         Ensurer.ensure_clean_install_possible
 
-        logger.warn "Downloading RailsTheme from server..."
+        logger.warn "Figuring out what to download..."
         send_gemfile code
 
         dl_hash = get_download_hash code
@@ -91,8 +86,8 @@ module Railsthemes
         rescue SocketError => e
           Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
         rescue Exception => e
-          logger.info e.message
-          logger.info e.backtrace
+          logger.debug e.message
+          logger.debug e.backtrace
         end
 
         if response && response.code.to_s == '200'
@@ -103,26 +98,30 @@ module Railsthemes
       end
 
       def download_from_hash dl_hash, download_to
-        if dl_hash['theme']
+        url = dl_hash['theme']
+        if url
           logger.warn "Downloading main theme..."
           config = Utils.get_primary_configuration
           archive = File.join(download_to, "#{config.join('-')}.tar.gz")
-          Utils.download :url => dl_hash['theme'], :save_to => archive
+          logger.debug "Downloading url: #{url}"
+          Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading main theme."
         end
 
-        if dl_hash['email']
+        url = dl_hash['email']
+        if url
           logger.warn "Downloading email theme..."
           archive = File.join(download_to, 'email.tar.gz')
-          Utils.download :url => dl_hash['email'], :save_to => archive
+          logger.debug "Downloading url: #{url}"
+          Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading email theme."
         end
       end
 
       def send_gemfile code
-        return unless File.exists?('Gemfile.lock')
+        return nil unless File.exists?('Gemfile.lock')
         begin
-          response = RestClient.post("#{Railsthemes.server}/gemfiles/parse",
+          RestClient.post("#{Railsthemes.server}/gemfiles/parse",
             :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
         rescue SocketError => e
           Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'

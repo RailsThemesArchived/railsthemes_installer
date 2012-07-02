@@ -8,9 +8,7 @@ describe Railsthemes::Installer do
     @installer = Railsthemes::Installer.new
     @tempdir = stub_tempdir
 
-    # would be interesting to see if we still need these
     stub(Railsthemes::Ensurer).ensure_clean_install_possible
-    FileUtils.touch('Gemfile.lock')
   end
 
   describe :install_from_file_system do
@@ -90,19 +88,37 @@ describe Railsthemes::Installer do
     end
   end
 
-  describe '#download_and_install_from_hash' do
-    it 'should download and install theme when theme specified' do
+  describe '#download_from_hash' do
+    it 'should download and install main theme when theme specified' do
       mock(Railsthemes::Utils).download(:url => 'theme_url', :save_to => "dir/erb-css.tar.gz")
       @installer.download_from_hash({'theme' => 'theme_url'}, 'dir')
+    end
+
+    it 'should download and install email theme when email specified' do
+      mock(Railsthemes::Utils).download(:url => 'email_url', :save_to => "dir/email.tar.gz")
+      @installer.download_from_hash({'email' => 'email_url'}, 'dir')
     end
   end
 
   describe '#install_from_code' do
     before do
-      mock(@installer).send_gemfile('panozzaj@gmail.com:code')
+      mock(@installer).send_gemfile('code')
     end
 
-    it 'should do something'
+    it 'should download and install when the code is recognized' do
+      mock(@installer).get_download_hash('code') { :hash }
+      mock(@installer).download_from_hash(:hash, @tempdir)
+      mock(@installer).install_from_file_system(@tempdir)
+      @installer.install_from_code 'code'
+    end
+
+    it 'should print an error message when the code is not recognized' do
+      mock(@installer).get_download_hash('code') { nil }
+      dont_allow(@installer).download_from_hash(:hash, @tempdir)
+      dont_allow(@installer).install_from_file_system(@tempdir)
+      mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
+      @installer.install_from_code 'code'
+    end
   end
 
   describe '#get_download_hash' do
@@ -126,25 +142,34 @@ describe Railsthemes::Installer do
   end
 
   describe :send_gemfile do
-    before do
-      File.open('Gemfile.lock', 'w') do |file|
-        file.puts "GEM\n  remote: https://rubygems.org/"
+    context 'without Gemfile.lock present' do
+      it 'should not hit the server and should return nil' do
+        result = @installer.send_gemfile('panozzaj@gmail.com:code')
+        result.should be_nil
       end
     end
 
-    it 'should hit the server with the Gemfile and return the results, arrayified' do
-      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
-      params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
-      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
-        :body => 'haml,scss', :parameters => params
-      @installer.send_gemfile('panozzaj@gmail.com:code')
-    end
+    context 'with Gemfile.lock present' do
+      before do
+        File.open('Gemfile.lock', 'w') do |file|
+          file.puts "GEM\n  remote: https://rubygems.org/"
+        end
+      end
 
-    it 'should return a blank array when there are issues' do
-      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
-      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
-        :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
-      @installer.send_gemfile('panozzaj@gmail.com:code')
+      it 'should hit the server with the Gemfile and return the results, arrayified' do
+        FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
+        params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
+        FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+          :body => 'haml,scss', :parameters => params
+        @installer.send_gemfile('panozzaj@gmail.com:code')
+      end
+
+      it 'should return a blank array when there are issues' do
+        FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
+        FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+          :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
+        @installer.send_gemfile('panozzaj@gmail.com:code')
+      end
     end
   end
 
