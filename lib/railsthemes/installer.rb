@@ -1,13 +1,7 @@
 require 'rubygems'
-require 'date'
-require 'fileutils'
-require 'logger'
-require 'tmpdir'
 require 'bundler'
-require 'net/http'
-require 'rest-client'
+require 'fileutils'
 require 'launchy'
-require 'thor'
 
 module Railsthemes
   class Installer < Thor
@@ -41,10 +35,11 @@ module Railsthemes
         Launchy.open(style_guide) if style_guide
       end
 
+      # primary method
       def install_from_file_system original_source_filepath
         Ensurer.ensure_clean_install_possible
 
-        config = Utils.get_primary_configuration(Utils.read_file('Gemfile.lock'))
+        config = Utils.get_primary_configuration
         filepath = File.join(original_source_filepath, config.join('-'))
         if File.directory?(filepath)
           theme_installer.install_from_file_system filepath
@@ -67,11 +62,74 @@ module Railsthemes
         popup_documentation if @doc_popup
       end
 
+      # primary method
       def install_from_code code
         Ensurer.ensure_clean_install_possible
-        theme_installer.install_from_server code
-        print_post_installation_instructions
-        popup_documentation if @doc_popup
+
+        logger.warn "Downloading RailsTheme from server..."
+        send_gemfile code
+
+        dl_hash = get_download_hash code
+
+        if dl_hash
+          Utils.with_tempdir do |tempdir|
+            download_from_hash dl_hash, tempdir
+            install_from_file_system tempdir
+          end
+        else
+          Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It should look something like your@email.com:ABCDEF.")
+        end
+      end
+
+
+      def get_download_hash code
+        config = Utils.get_primary_configuration
+        server_request_url = "#{Railsthemes.server}/download?code=#{code}&config=#{config * ','}&v=2"
+        response = nil
+        begin
+          response = Utils.get_url server_request_url
+        rescue SocketError => e
+          Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
+        rescue Exception => e
+          logger.info e.message
+          logger.info e.backtrace
+        end
+
+        if response && response.code.to_s == '200'
+          JSON.parse(response.body)
+        else
+          nil
+        end
+      end
+
+      def download_from_hash dl_hash, download_to
+        if dl_hash['theme']
+          logger.warn "Downloading main theme..."
+          config = Utils.get_primary_configuration
+          archive = File.join(download_to, "#{config.join('-')}.tar.gz")
+          Utils.download :url => dl_hash['theme'], :save_to => archive
+          logger.warn "Done downloading main theme."
+        end
+
+        if dl_hash['email']
+          logger.warn "Downloading email theme..."
+          archive = File.join(download_to, 'email.tar.gz')
+          Utils.download :url => dl_hash['email'], :save_to => archive
+          logger.warn "Done downloading email theme."
+        end
+      end
+
+      def send_gemfile code
+        return unless File.exists?('Gemfile.lock')
+        begin
+          response = RestClient.post("#{Railsthemes.server}/gemfiles/parse",
+            :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
+        rescue SocketError => e
+          Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'
+        rescue Exception => e
+          logger.info e.message
+          logger.info e.backtrace
+        end
       end
 
       def print_post_installation_instructions

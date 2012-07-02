@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'railsthemes'
+require 'json'
 
 describe Railsthemes::Installer do
   before do
@@ -8,15 +9,14 @@ describe Railsthemes::Installer do
     @tempdir = stub_tempdir
 
     # would be interesting to see if we still need these
-    stub(@installer).ensure_in_rails_root
+    stub(Railsthemes::Ensurer).ensure_clean_install_possible
     FileUtils.touch('Gemfile.lock')
   end
 
   describe :install_from_file_system do
     before do
       FakeFS::FileSystem.clone('spec/fixtures')
-      stub(Railsthemes::Ensurer).ensure_clean_install_possible
-      stub(Railsthemes::Utils).get_primary_configuration(anything) { ['erb', 'css'] }
+      stub(Railsthemes::Utils).get_primary_configuration { ['erb', 'css'] }
     end
 
     describe 'installing theme' do
@@ -58,7 +58,6 @@ describe Railsthemes::Installer do
     context 'when installing from the file system' do
       before do
         FakeFS::FileSystem.clone('spec/fixtures')
-        stub(Railsthemes::Ensurer).ensure_clean_install_possible
         stub(@installer.theme_installer).install_from_file_system(anything)
         stub(@installer.email_installer).install_from_file_system(anything)
       end
@@ -72,25 +71,6 @@ describe Railsthemes::Installer do
       it 'should pop it up when the user did not specify to not pop it up' do
         mock(@installer).popup_documentation
         @installer.install_from_file_system 'spec/fixtures/blank-assets'
-      end
-    end
-
-    context 'when installing from a code' do
-      before do
-        stub(Railsthemes::Ensurer).ensure_clean_install_possible
-      end
-
-      it 'should not pop it up when the user specified not to pop it up' do
-        @installer.doc_popup = false
-        mock(@installer.theme_installer).install_from_server('code')
-        dont_allow(@installer).popup_documentation
-        @installer.install_from_code 'code'
-      end
-
-      it 'should pop it up when the user did not specify to not pop it up' do
-        mock(@installer.theme_installer).install_from_server('code')
-        mock(@installer).popup_documentation
-        @installer.install_from_code 'code'
       end
     end
   end
@@ -109,4 +89,63 @@ describe Railsthemes::Installer do
       @installer.popup_documentation
     end
   end
+
+  describe '#download_and_install_from_hash' do
+    it 'should download and install theme when theme specified' do
+      mock(Railsthemes::Utils).download(:url => 'theme_url', :save_to => "dir/erb-css.tar.gz")
+      @installer.download_from_hash({'theme' => 'theme_url'}, 'dir')
+    end
+  end
+
+  describe '#install_from_code' do
+    before do
+      mock(@installer).send_gemfile('panozzaj@gmail.com:code')
+    end
+
+    it 'should do something'
+  end
+
+  describe '#get_download_hash' do
+    it 'should download the file correctly when valid configuration' do
+      FakeWeb.register_uri :get,
+        /download\?code=panozzaj@gmail.com:code&config=haml,scss&v=2/,
+        :body => { 'theme' => 'auth_url' }.to_json
+      mock(Railsthemes::Utils).get_primary_configuration { ['haml', 'scss'] }
+      result = @installer.get_download_hash 'panozzaj@gmail.com:code'
+      result.should == { 'theme' => 'auth_url' }
+    end
+
+    it 'should fail with an error message on any error message' do
+      FakeWeb.register_uri :get,
+        'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
+        :body => '', :status => ['401', 'Unauthorized']
+      mock(Railsthemes::Utils).get_primary_configuration { [] }
+      mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
+      @installer.install_from_code 'panozzaj@gmail.com:code'
+    end
+  end
+
+  describe :send_gemfile do
+    before do
+      File.open('Gemfile.lock', 'w') do |file|
+        file.puts "GEM\n  remote: https://rubygems.org/"
+      end
+    end
+
+    it 'should hit the server with the Gemfile and return the results, arrayified' do
+      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
+      params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
+      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+        :body => 'haml,scss', :parameters => params
+      @installer.send_gemfile('panozzaj@gmail.com:code')
+    end
+
+    it 'should return a blank array when there are issues' do
+      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
+      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
+        :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
+      @installer.send_gemfile('panozzaj@gmail.com:code')
+    end
+  end
+
 end

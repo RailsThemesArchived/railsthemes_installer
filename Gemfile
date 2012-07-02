@@ -4,6 +4,7 @@ gemspec
 gem 'thor'
 gem 'rest-client'
 gem 'launchy'
+gem 'json'
 # make sure you add any new dependencies in railsthemes.gemspec
 
 group :development do
@@ -12,7 +13,6 @@ group :development do
   gem 'guard-rspec'
 end
 
-# development gems
 group :test do
   gem 'rspec'
   gem 'rr'

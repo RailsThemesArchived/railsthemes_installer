@@ -25,7 +25,10 @@ module Railsthemes
 
     # would be nice to put download status in the output (speed, progress, etc.)
     # needs tests
-    def self.download_file_to url, save_to
+    def self.download params = {}
+      url = params[:url]
+      save_to = params[:save_to]
+      return unless url && save_to
       uri = URI(url)
       http = Net::HTTP.new uri.host, uri.port
       set_https http if uri.scheme == 'https'
@@ -90,12 +93,13 @@ module Railsthemes
       logger.warn "Finished extracting."
     end
 
-    def self.get_primary_configuration gemfile_contents
+    def self.get_primary_configuration gemfile_contents = read_file('Gemfile.lock')
       gem_names = gemspecs(gemfile_contents).map(&:name)
       [(gem_names.include?('haml') ? 'haml' : 'erb'),
        (gem_names.include?('sass') ? 'scss' : 'css')]
     end
 
+    # needs tests
     def self.conditionally_insert_routes routes_hash
       if File.exists?(File.join('config', 'routes.rb'))
         lines = Utils.read_file('config/routes.rb').split("\n")
@@ -114,6 +118,7 @@ module Railsthemes
       end
     end
 
+    # needs tests
     def self.conditionally_install_gems *gem_names
       if File.exists?('Gemfile')
         lines = Utils.read_file('Gemfile').split("\n")

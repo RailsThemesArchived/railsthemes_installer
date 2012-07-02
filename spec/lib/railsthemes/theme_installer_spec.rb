@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'railsthemes'
+require 'json'
 
 describe Railsthemes::ThemeInstaller do
   before do
@@ -11,33 +12,6 @@ describe Railsthemes::ThemeInstaller do
     FileUtils.touch('Gemfile.lock')
   end
 
-  describe '#install_from_server' do
-    context 'when a gemfile.lock is present' do
-      before do
-        mock(@installer).send_gemfile('panozzaj@gmail.com:code')
-      end
-
-      it 'should download the file correctly when valid configuration' do
-        FakeWeb.register_uri :get,
-          /download\?code=panozzaj@gmail.com:code&config=haml,scss/,
-          :body => 'auth_url'
-        mock(Railsthemes::Utils).get_primary_configuration('') { ['haml', 'scss'] }
-        mock(Railsthemes::Utils).download_file_to('auth_url', "#{@tempdir}/archive.tar.gz")
-        mock(@installer).install_from_archive "#{@tempdir}/archive.tar.gz"
-        @installer.install_from_server 'panozzaj@gmail.com:code'
-      end
-
-      it 'should fail with an error message on any error message' do
-        FakeWeb.register_uri :get,
-          'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
-          :body => '', :status => ['401', 'Unauthorized']
-        mock(Railsthemes::Utils).get_primary_configuration('') { [] }
-        mock(Railsthemes::Safe).log_and_abort(/didn't recognize/)
-        @installer.install_from_server 'panozzaj@gmail.com:code'
-      end
-    end
-  end
-
   describe :install_from_archive do
     # does not work on Windows, NotImplementedError in tar module
     it 'should extract and then install from that extracted directory' do
@@ -45,29 +19,6 @@ describe Railsthemes::ThemeInstaller do
       FakeFS::FileSystem.clone(filename)
       mock(@installer).install_from_file_system @tempdir
       @installer.install_from_archive filename
-    end
-  end
-
-  describe :send_gemfile do
-    before do
-      File.open('Gemfile.lock', 'w') do |file|
-        file.puts "GEM\n  remote: https://rubygems.org/"
-      end
-    end
-
-    it 'should hit the server with the Gemfile and return the results, arrayified' do
-      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
-      params = { :code => 'panozzaj@gmail.com:code', :gemfile_lock => File.new('Gemfile.lock', 'rb') }
-      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
-        :body => 'haml,scss', :parameters => params
-      @installer.send_gemfile('panozzaj@gmail.com:code')
-    end
-
-    it 'should return a blank array when there are issues' do
-      FakeFS.deactivate! # has an issue with generating tmpfiles otherwise
-      FakeWeb.register_uri :post, 'https://railsthemes.com/gemfiles/parse',
-        :body => '', :parameters => :any, :status => ['401', 'Unauthorized']
-      @installer.send_gemfile('panozzaj@gmail.com:code')
     end
   end
 

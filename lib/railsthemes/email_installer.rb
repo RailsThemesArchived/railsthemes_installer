@@ -1,5 +1,3 @@
-require 'thor'
-
 module Railsthemes
   class EmailInstaller < Thor
     no_tasks do

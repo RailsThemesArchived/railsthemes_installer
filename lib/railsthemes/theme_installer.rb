@@ -1,64 +1,13 @@
-require 'thor'
-
 module Railsthemes
   class ThemeInstaller < Thor
     no_tasks do
       include Railsthemes::Logging
       include Thor::Actions
 
-      def install_from_server code
-        logger.warn "Downloading theme from server..."
-        Utils.with_tempdir do |tempdir|
-          archive = File.join(tempdir, 'archive.tar.gz')
-          if File.exists?('Gemfile.lock')
-            send_gemfile code # first time hitting the server
-          end
-          config = Utils.get_primary_configuration(Utils.read_file('Gemfile.lock'))
-          dl_url = get_download_url "#{Railsthemes.server}/download?code=#{code}&config=#{config * ','}"
-          if dl_url
-            Utils.download_file_to dl_url, archive
-            logger.warn "Finished downloading."
-            install_from_archive archive
-          else
-            Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It should look something like your@email.com:ABCDEF.")
-          end
-        end
-      end
-
       def install_from_archive filepath
         Railsthemes::Utils.with_tempdir do |tempdir|
           Utils.unarchive filepath, tempdir
           install_from_file_system tempdir
-        end
-      end
-
-      def send_gemfile code
-        begin
-          response = RestClient.post("#{Railsthemes.server}/gemfiles/parse",
-            :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
-        rescue SocketError => e
-          Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'
-        rescue Exception => e
-          logger.info e.message
-          logger.info e.backtrace
-        end
-      end
-
-      def get_download_url server_request_url
-        response = nil
-        begin
-          response = Utils.get_url server_request_url
-        rescue SocketError => e
-          Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
-        rescue Exception => e
-          logger.info e.message
-          logger.info e.backtrace
-        end
-
-        if response && response.code.to_s == '200'
-          response.body
-        else
-          nil
         end
       end
 
