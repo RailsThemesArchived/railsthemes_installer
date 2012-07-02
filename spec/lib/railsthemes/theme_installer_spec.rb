@@ -101,17 +101,12 @@ describe Railsthemes::ThemeInstaller do
         archive = 'tarfile.tar.gz'
         FileUtils.touch archive
         mock(@installer).install_from_archive archive
-        @installer.install_from_file_system archive
-      end
-
-      it 'should print an error message and exit if the archive cannot be found' do
-        mock(Railsthemes::Safe).log_and_abort(/Cannot find/)
-        @installer.install_from_file_system 'tarfile.tar.gz'
+        @installer.install_from_file_system 'tarfile'
       end
     end
 
     context 'otherwise' do
-      it 'should print usage and report an error reading the file' do
+      it 'should report an error reading the file' do
         mock(Railsthemes::Safe).log_and_abort(/either/)
         @installer.install_from_file_system("does not exist")
       end
@@ -202,7 +197,7 @@ end
 
     # does not work on Windows, NotImplementedError in tar module
     it 'should extract correctly from archive' do
-      filename = 'spec/fixtures/blank-assets-archived/erb-css.tar.gz'
+      filename = 'spec/fixtures/blank-assets-archived/erb-css'
       @installer.install_from_file_system filename
       verify_end_to_end_operation
     end

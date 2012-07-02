@@ -25,6 +25,8 @@ module Railsthemes
       url = params[:url]
       save_to = params[:save_to]
       return unless url && save_to
+      logger.info "Downloading url: #{url}"
+      logger.info "Saving to: #{save_to}"
       uri = URI(url)
       http = Net::HTTP.new uri.host, uri.port
       set_https http if uri.scheme == 'https'
@@ -60,7 +62,7 @@ module Railsthemes
     end
 
     def self.archive? filepath
-      filepath =~ /\.tar\.gz$/
+      File.exists?(filepath) && filepath =~ /\.tar\.gz$/
     end
 
     # needs tests
@@ -89,7 +91,7 @@ module Railsthemes
     def self.unarchive archive, extract_to
       Safe.log_and_abort "Archive expected at #{archive}, but none exists." unless File.exist?(archive)
       logger.warn "Extracting..."
-      logger.debug "Attempting to extract #{archive}"
+      logger.info "Attempting to extract #{archive}"
       io = Tar.ungzip(File.open(archive, 'rb'))
       Tar.untar(io, extract_to)
       logger.warn "Finished extracting."

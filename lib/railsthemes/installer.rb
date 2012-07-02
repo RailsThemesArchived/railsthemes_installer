@@ -34,21 +34,19 @@ module Railsthemes
       def install_from_file_system original_source_filepath
         Ensurer.ensure_clean_install_possible
 
+        # install main theme
         config = Utils.get_primary_configuration
         filepath = File.join(original_source_filepath, config.join('-'))
-        if File.directory?(filepath)
+        if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           theme_installer.install_from_file_system filepath
-        elsif File.exists?(filepath + '.tar.gz')
-          theme_installer.install_from_file_system filepath + '.tar.gz'
         else
           Safe.log_and_abort "Could not find the file you need: #{filepath}"
         end
 
+        # install email theme if present
         filepath = File.join(original_source_filepath, 'email')
-        if File.directory?(filepath)
+        if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           email_installer.install_from_file_system filepath
-        elsif File.exists?(filepath + '.tar.gz')
-          email_installer.install_from_file_system filepath + '.tar.gz'
         else
           # no email to install... moving along
         end
@@ -103,7 +101,6 @@ module Railsthemes
           logger.warn "Downloading main theme..."
           config = Utils.get_primary_configuration
           archive = File.join(download_to, "#{config.join('-')}.tar.gz")
-          logger.debug "Downloading url: #{url}"
           Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading main theme."
         end
@@ -112,7 +109,6 @@ module Railsthemes
         if url
           logger.warn "Downloading email theme..."
           archive = File.join(download_to, 'email.tar.gz')
-          logger.debug "Downloading url: #{url}"
           Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading email theme."
         end

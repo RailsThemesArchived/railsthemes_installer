@@ -7,11 +7,19 @@ describe Railsthemes::Utils do
   end
 
   describe :archive? do
+    it 'should be false if the file does not exist' do
+      Railsthemes::Utils.archive?('test/a/b/c/d.tar.gz').should be_false
+    end
+
     it 'should be true for tar.gz file' do
+      FileUtils.mkdir_p('test/a/b/c')
+      FileUtils.touch('test/a/b/c/d.tar.gz')
       Railsthemes::Utils.archive?('test/a/b/c/d.tar.gz').should be_true
     end
 
     it 'should be false for other extensions' do
+      FileUtils.mkdir_p('test/a/b/c.tar')
+      FileUtils.touch('test/a/b/c.tar/d.zip')
       Railsthemes::Utils.archive?('test/a/b/c.tar/d.zip').should be_false
     end
   end
