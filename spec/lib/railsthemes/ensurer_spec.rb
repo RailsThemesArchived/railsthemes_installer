@@ -6,6 +6,26 @@ describe Railsthemes::Ensurer do
     setup_logger
   end
 
+  describe :ensure_clean_install_possible do
+    it 'should not do twice normally' do
+      mock(Railsthemes::Ensurer).ensure_in_rails_root.times(1)
+      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(1)
+      mock(Railsthemes::Ensurer).ensure_bundle_is_up_to_date.times(1)
+      mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(1)
+      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(1)
+      2.times { Railsthemes::Ensurer.ensure_clean_install_possible }
+    end
+
+    it 'should do twice if force passed' do
+      mock(Railsthemes::Ensurer).ensure_in_rails_root.times(2)
+      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(2)
+      mock(Railsthemes::Ensurer).ensure_bundle_is_up_to_date.times(2)
+      mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(2)
+      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(2)
+      2.times { Railsthemes::Ensurer.ensure_clean_install_possible true }
+    end
+  end
+
   describe :ask_to_install_unsupported do
     it 'should abort if the user does not want to continue' do
       mock(Railsthemes::Safe).yes?(/wish to install/) { false }

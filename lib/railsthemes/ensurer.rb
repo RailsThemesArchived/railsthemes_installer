@@ -2,13 +2,17 @@ module Railsthemes
   class Ensurer
     extend Railsthemes::Logging
 
+    @@already_checked = false
+
     # checks if we can cleanly install into the current working directory
-    def self.ensure_clean_install_possible
+    def self.ensure_clean_install_possible force = false
+      return if @@already_checked unless force
       ensure_in_rails_root
       ensure_vcs_is_clean
       ensure_bundle_is_up_to_date
       ensure_rails_version_is_valid
       ensure_installer_is_up_to_date
+      @@already_checked = true
     end
 
     def self.ensure_in_rails_root
