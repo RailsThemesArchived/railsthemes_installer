@@ -37,6 +37,8 @@ module Railsthemes
           file.write(response.body)
         end
       else
+        logger.debug "response.code: #{response.code}"
+        logger.debug "response.body: #{response.body}"
         Safe.log_and_abort 'Had trouble downloading a file and cannot continue.'
       end
     end
