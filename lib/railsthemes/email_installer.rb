@@ -34,7 +34,7 @@ module Railsthemes
           end
         end
 
-        inject_into_file File.join('app', 'controllers', 'railsthemes_controller.rb'), :after => 'class RailsthemesController < ApplicationController' do
+        inject_into_file File.join('app', 'controllers', 'railsthemes_controller.rb'), :after => 'class RailsthemesController < ApplicationController', :verbose => false do
 <<-EOS
 
 def email
@@ -54,7 +54,7 @@ EOS
 
         Utils.conditionally_install_gems 'roadie', 'premailer-rails3'
 
-        create_file File.join('config', 'initializers', 'premailer.rb') do
+        create_file File.join('config', 'initializers', 'premailer.rb'), :verbose => false do
           "PremailerRails.config.merge(:input_encoding => 'UTF-8', :generate_text_part => true)"
         end
 
