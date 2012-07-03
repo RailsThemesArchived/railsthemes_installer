@@ -128,7 +128,7 @@ module Railsthemes
         lines = Utils.read_file('Gemfile').split("\n")
         gem_names.each do |gem_name|
           if lines.grep(/#{gem_name}/).empty?
-            lines << "  gem '#{gem_name}'"
+            lines << "gem '#{gem_name}'"
           end
         end
         File.open('Gemfile', 'w') do |f|

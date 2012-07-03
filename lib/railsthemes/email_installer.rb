@@ -52,7 +52,11 @@ EOS
           'railsthemes/send_email' => 'railsthemes#send_email'
         })
 
-        Utils.conditionally_install_gems 'roadie'
+        Utils.conditionally_install_gems 'roadie', 'premailer-rails3'
+
+        create_file File.join('config', 'initializers', 'premailer.rb') do
+          "PremailerRails.config.merge(:input_encoding => 'UTF-8', :generate_text_part => true)"
+        end
 
         logger.warn 'Done installing email theme.'
       end
