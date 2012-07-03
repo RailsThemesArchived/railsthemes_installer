@@ -8,8 +8,9 @@ module Railsthemes
     def self.ensure_clean_install_possible force = false
       return if @@already_checked unless force
       ensure_in_rails_root
-      ensure_vcs_is_clean
       ensure_bundle_is_up_to_date
+      ensure_railsthemes_is_not_in_gemfile
+      ensure_vcs_is_clean
       ensure_rails_version_is_valid
       ensure_installer_is_up_to_date
       @@already_checked = true
@@ -60,12 +61,12 @@ Please roll back or commit the changes before proceeding to ensure that you can 
       begin
         response = Utils.get_url url
       rescue SocketError => e
-        logger.info e.message
-        logger.info e.backtrace * "\n"
+        logger.debug e.message
+        logger.debug e.backtrace * "\n"
         Safe.log_and_abort 'We could not reach the RailsThemes server to download the theme. Please check your internet connection and try again.'
       rescue Exception => e
-        logger.info e.message
-        logger.info e.backtrace * "\n"
+        logger.debug e.message
+        logger.debug e.backtrace * "\n"
       end
 
       if response && response.code.to_s == '200'
@@ -83,6 +84,8 @@ EOS
           logger.debug "server recommended version: #{server_recommended_version_string}"
         end
       else
+        logger.debug 'Got an error'
+        logger.debug response
         Safe.log_and_abort 'There was an issue checking your installer version.'
       end
       logger.warn "Done checking installer version."
@@ -136,6 +139,14 @@ EOS
       specs = Utils.gemspecs(gemfile_contents)
       rails = specs.select{ |x| x.name == 'rails' }.first
       rails.version if rails && rails.version
+    end
+
+    def self.ensure_railsthemes_is_not_in_gemfile gemfile_contents = nil
+      gemfile_contents ||= Utils.read_file('Gemfile.lock')
+      specs = Utils.gemspecs(gemfile_contents)
+      if specs.any? { |x| x.name == 'railsthemes' }
+        Safe.log_and_abort "You should not install the railsthemes installer in your Gemfile.\nPlease remove and try again."
+      end
     end
   end
 end

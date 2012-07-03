@@ -9,8 +9,9 @@ describe Railsthemes::Ensurer do
   describe :ensure_clean_install_possible do
     it 'should not do twice normally' do
       mock(Railsthemes::Ensurer).ensure_in_rails_root.times(1)
-      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(1)
       mock(Railsthemes::Ensurer).ensure_bundle_is_up_to_date.times(1)
+      mock(Railsthemes::Ensurer).ensure_railsthemes_is_not_in_gemfile.times(1)
+      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(1)
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(1)
       mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(1)
       2.times { Railsthemes::Ensurer.ensure_clean_install_possible }
@@ -18,8 +19,9 @@ describe Railsthemes::Ensurer do
 
     it 'should do twice if force passed' do
       mock(Railsthemes::Ensurer).ensure_in_rails_root.times(2)
-      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(2)
       mock(Railsthemes::Ensurer).ensure_bundle_is_up_to_date.times(2)
+      mock(Railsthemes::Ensurer).ensure_railsthemes_is_not_in_gemfile.times(2)
+      mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(2)
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(2)
       mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(2)
       2.times { Railsthemes::Ensurer.ensure_clean_install_possible true }
@@ -197,4 +199,17 @@ describe Railsthemes::Ensurer do
     end
   end
 
+  describe :ensure_railsthemes_is_not_in_gemfile do
+    it 'should log and abort if railsthemes is in the Gemfile.lock' do
+      mock(Railsthemes::Safe).log_and_abort(/in your Gemfile/i)
+      gemfile = using_gem_specs :railsthemes => '1.0.4'
+      Railsthemes::Ensurer.ensure_railsthemes_is_not_in_gemfile gemfile
+    end
+
+    it 'should do nothing if railsthemes is not in the Gemfile.lock' do
+      dont_allow(Railsthemes::Safe).log_and_abort(anything)
+      gemfile = using_gem_specs
+      Railsthemes::Ensurer.ensure_railsthemes_is_not_in_gemfile gemfile
+    end
+  end
 end
