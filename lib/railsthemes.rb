@@ -20,11 +20,12 @@ require 'railsthemes/ensurer'
 module Railsthemes
   def self.server
     return @server if @server
-    @server = 'https://railsthemes.com'
-    if File.exist?('railsthemes_server')
-      Logging.logger.warn "WARNING: Using railsthemes_server override!"
-      @server = File.read('railsthemes_server').gsub("\n", '')
-    end
+    @server ||= 'https://railsthemes.com'
     @server
+  end
+
+  def self.server= server
+    @server = server
+    Logging.logger.warn "Using server: #{server}"
   end
 end
