@@ -6,6 +6,7 @@ module Railsthemes
 
       def initialize
         @doc_popup = true
+        @installed_email = false
       end
 
       def doc_popup= doc_popup
@@ -47,6 +48,7 @@ module Railsthemes
         filepath = File.join(original_source_filepath, 'email')
         if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           email_installer.install_from_file_system filepath
+          @installed_email = true
         else
           # no email to install... moving along
         end
@@ -128,7 +130,6 @@ module Railsthemes
       end
 
       def print_post_installation_instructions
-        number = 0
         logger.warn <<-EOS
 
 Yay! Your theme is installed!
@@ -143,17 +144,27 @@ There are some help articles for your perusal at http://support.railsthemes.com.
 
 
 What now?
-1) Make sure that you have the jquery-rails gem installed. All of the current
-   themes require this in your Gemfile so we can use jQuery UI.
-2) Start or restart your development server.
-3) Check out the local theme samples at:
-   http://localhost:3000/railsthemes/landing
-   http://localhost:3000/railsthemes/inner
-   http://localhost:3000/railsthemes/jquery_ui
-4) Ensure your new application layout file contains everything that you wanted
-   from the old one.
-5) Let us know how it went: @railsthemes or support@railsthemes.com.
 EOS
+        with_number("Make sure that you have the jquery-rails gem installed. All of the current",
+                    "themes require this in your Gemfile so we can use jQuery UI.")
+        with_number "Start or restart your development server."
+        with_number("Check out the local theme samples at:",
+                    "http://localhost:3000/railsthemes/landing",
+                    "http://localhost:3000/railsthemes/inner",
+                    "http://localhost:3000/railsthemes/jquery_ui")
+        with_number("Ensure your new application layout file contains everything that you wanted",
+                    "from the old one.")
+        with_number("For instructions on how to send RailsThemes-styled emails in your app,",
+                    "check out the documentation in the docs folder.") if @installed_email
+        with_number "Let us know how it went: @railsthemes or support@railsthemes.com."
+      end
+
+      def with_number *lines
+        @number ||= 0
+        logger.warn "#{@number += 1}) #{lines[0]}"
+        lines[1..-1].each do |line|
+          logger.warn "   #{line}"
+        end
       end
     end
   end

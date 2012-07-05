@@ -21,7 +21,10 @@ module Railsthemes
   def self.server
     return @server if @server
     @server = 'https://railsthemes.com'
-    @server = File.read('railsthemes_server').gsub("\n", '') if File.exist?('railsthemes_server')
+    if File.exist?('railsthemes_server')
+      Logging.logger.warn "WARNING: Using railsthemes_server override!"
+      @server = File.read('railsthemes_server').gsub("\n", '')
+    end
     @server
   end
 end
