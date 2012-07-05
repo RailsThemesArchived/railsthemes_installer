@@ -24,7 +24,7 @@ EOS
 
   desc "install your@email:code", "Install from RailsThemes.com using your download code"
   method_option :file,
-    :desc => "Use local filename instead of downloading.",
+    :desc => "Use local relative pathname instead of a code, and install from there.",
     :type => :boolean
   method_option :no_doc_popup,
     :desc => "Do not pop up documentation on successful install.",
@@ -36,23 +36,25 @@ EOS
   method_option :debugging,
     :desc => "Print gratuitous output on installation (for debugging).",
     :type => :boolean
-
   def install code_or_file
     # might be better to pass in the options directly if we get more options
     installer = Railsthemes::Installer.new
+
+    if options[:email]
+    end
+
     installer.doc_popup = !options[:no_doc_popup]
-    installer.verbose if options[:verbose]
-    installer.debug if options[:debugging]
+    Railsthemes::Logging.verbose if options[:verbose]
+    Railsthemes::Logging.debug if options[:debugging]
 
     if options[:file]
       file = code_or_file
       abort 'Please specify a file to install from' unless file
-      puts "Installing from file: #{file}."
       installer.install_from_file_system file
     else
       code = code_or_file
       abort 'Please specify a code to install from' unless code
-      installer.download_from_code code
+      installer.install_from_code code
     end
   end
 
