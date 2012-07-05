@@ -26,9 +26,12 @@ module Railsthemes
       end
 
       def popup_documentation
-        style_guide = Dir['doc/*Usage_And_Style_Guide.html'].first
-        logger.debug("style_guide: #{style_guide}")
-        Launchy.open(style_guide) if style_guide
+        style_guides = Dir['doc/*Usage_And_Style_Guide.html']
+        # need better tests of popping up multiple docs
+        style_guides.each do |style_guide|
+          logger.debug("style_guide: #{style_guide}")
+          Launchy.open(style_guide) if style_guide
+        end
       end
 
       # primary method
