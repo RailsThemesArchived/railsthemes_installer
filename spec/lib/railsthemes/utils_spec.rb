@@ -50,6 +50,23 @@ describe Railsthemes::Utils do
     end
   end
 
+  describe 'add_gem_to_gemfile' do
+    it 'should add the gem to the Gemfile' do
+      File.open('Gemfile', 'w') do |f|
+        f.puts "gem 'test'"
+      end
+      Railsthemes::Utils.add_gem_to_gemfile 'test'
+      lines = File.open('Gemfile').readlines.map(&:strip)
+      lines.count.should == 2
+      lines[0].should == "gem 'test'"
+      lines[1].should == "gem 'test'"
+    end
+
+    it 'should not fail if the Gemfile is not present' do
+      Railsthemes::Utils.add_gem_to_gemfile 'test'
+    end
+  end
+
   describe 'download' do
     it 'should log and abort if file not found at url' do
       FakeWeb.register_uri :get,
