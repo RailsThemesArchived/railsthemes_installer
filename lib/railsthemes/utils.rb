@@ -128,7 +128,7 @@ module Railsthemes
 
       def self.add_gem_to_gemfile gem_name
         File.open('Gemfile', 'a') do |f|
-          f.write "gem '#{gem_name}'"
+          f.puts "gem '#{gem_name}'"
         end
       end
     end
