@@ -63,12 +63,15 @@ EOS
 
       def install_mail_gems_if_necessary
         gem_names = Utils.gemspecs.map(&:name)
+        logger.debug "gem_names: #{gem_names}"
         unless gem_names.include?('premailer-rails3')
           if (gem_names & ['hpricot', 'nokogiri']).empty?
             Utils.add_gem_to_gemfile 'hpricot'
           end
           Utils.add_gem_to_gemfile 'premailer-rails3'
+          logger.warn 'Installing assistant mail gems...'
           Safe.system_call 'bundle'
+          logger.warn 'Done installing assistant mail gems.'
         end
       end
 
