@@ -19,13 +19,11 @@ require 'railsthemes/ensurer'
 
 module Railsthemes
   def self.server
-    return @server if @server
     @server ||= 'https://railsthemes.com'
-    @server
   end
 
   def self.server= server
-    @server = server
     Logging.logger.warn "Using server: #{server}"
+    @server = server
   end
 end
