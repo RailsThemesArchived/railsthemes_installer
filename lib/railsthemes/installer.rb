@@ -16,13 +16,11 @@ module Railsthemes
       # can probably just make static
       def theme_installer
         @theme_installer ||= ThemeInstaller.new
-        @theme_installer
       end
 
       # can probably just make static
       def email_installer
         @email_installer ||= EmailInstaller.new
-        @email_installer
       end
 
       def popup_documentation
@@ -70,6 +68,7 @@ module Railsthemes
         dl_hash = get_download_hash code
 
         if dl_hash
+          logger.debug "dl_hash: #{dl_hash.to_s}"
           Utils.with_tempdir do |tempdir|
             download_from_hash dl_hash, tempdir
             install_from_file_system tempdir

@@ -6,16 +6,14 @@ module Railsthemes
     end
 
     def self.logger
-      if @logger
-        @logger
-      else
+      unless @logger
         @logger = Logger.new(STDOUT)
         @logger.level = Logger::WARN
 
         # just print out basic information, not all of the extra logger stuff
         @logger.formatter = proc { |severity, datetime, progname, msg| "#{msg}\n" }
-        @logger
       end
+      @logger
     end
 
     def self.logger= logger
