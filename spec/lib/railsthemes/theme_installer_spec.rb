@@ -73,7 +73,7 @@ describe Railsthemes::ThemeInstaller do
         FileUtils.mkdir_p('filepath/gems')
         FileUtils.mkdir_p('filepath/base/app/assets/stylesheets')
         FileUtils.mkdir_p("app/assets/stylesheets")
-        @filename = 'app/assets/stylesheets/railsthemes_THEME_overrides.anything'
+        @filename = 'app/assets/stylesheets/overrides.css.scss'
         FileUtils.touch("filepath/base/#{@filename}")
         mock(@installer).post_copying_changes
         stub(@installer).popup_documentation

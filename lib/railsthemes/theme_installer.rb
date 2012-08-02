@@ -41,7 +41,7 @@ module Railsthemes
               FileUtils.mkdir_p(dest)
             end
           else
-            unless (dest =~ /railsthemes_.*_overrides\.*/ && File.exists?(dest)) ||
+            unless (dest =~ /overrides\.css.*/ && File.exists?(dest)) ||
                 src =~ /\/\./ # remove any pesky hidden files that crept into the archive
               logger.debug "cp #{src} #{dest}"
               FileUtils.cp(src, dest)
