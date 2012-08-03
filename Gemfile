@@ -1,11 +1,6 @@
 source 'https://rubygems.org'
 
 gemspec
-gem 'thor'
-gem 'rest-client'
-gem 'launchy'
-gem 'json'
-# make sure you add any new dependencies in railsthemes.gemspec
 
 group :development do
   gem 'gem-release'
