@@ -5,14 +5,14 @@ module Railsthemes
     @@already_checked = false
 
     # checks if we can cleanly install into the current working directory
-    def self.ensure_clean_install_possible force = false
-      return if @@already_checked unless force
+    def self.ensure_clean_install_possible options = {}
+      return if @@already_checked unless options[:force]
       ensure_in_rails_root
       ensure_bundle_is_up_to_date
       ensure_railsthemes_is_not_in_gemfile
       ensure_vcs_is_clean
       ensure_rails_version_is_valid
-      ensure_installer_is_up_to_date
+      ensure_installer_is_up_to_date unless options[:hit_server] == false
       @@already_checked = true
     end
 

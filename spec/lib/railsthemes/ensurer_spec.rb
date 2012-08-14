@@ -24,7 +24,17 @@ describe Railsthemes::Ensurer do
       mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(2)
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(2)
       mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(2)
-      2.times { Railsthemes::Ensurer.ensure_clean_install_possible true }
+      2.times { Railsthemes::Ensurer.ensure_clean_install_possible :force => true }
+    end
+
+    it 'should not check installer version if we do not want to hit the server' do
+      mock(Railsthemes::Ensurer).ensure_in_rails_root
+      mock(Railsthemes::Ensurer).ensure_bundle_is_up_to_date
+      mock(Railsthemes::Ensurer).ensure_railsthemes_is_not_in_gemfile
+      mock(Railsthemes::Ensurer).ensure_vcs_is_clean
+      mock(Railsthemes::Ensurer).ensure_rails_version_is_valid
+      dont_allow(Railsthemes::Ensurer).ensure_installer_is_up_to_date
+      Railsthemes::Ensurer.ensure_clean_install_possible :hit_server => false, :force => true
     end
   end
 

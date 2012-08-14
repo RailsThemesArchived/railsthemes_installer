@@ -32,9 +32,8 @@ module Railsthemes
         end
       end
 
-      # primary method
       def install_from_file_system original_source_filepath
-        Ensurer.ensure_clean_install_possible
+        Ensurer.ensure_clean_install_possible :hit_server => false
 
         # install main theme
         config = Utils.get_primary_configuration
@@ -58,9 +57,8 @@ module Railsthemes
         popup_documentation if @doc_popup
       end
 
-      # primary method
       def install_from_code code
-        Ensurer.ensure_clean_install_possible
+        Ensurer.ensure_clean_install_possible :hit_server => true
 
         logger.warn "Figuring out what to download..."
         send_gemfile code
