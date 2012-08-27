@@ -23,6 +23,11 @@ module Railsthemes
         @email_installer ||= EmailInstaller.new
       end
 
+      # can probably just make static
+      def asset_installer
+        @asset_installer ||= AssetInstaller.new
+      end
+
       def popup_documentation
         style_guides = Dir['doc/*Usage_And_Style_Guide.html']
         # need better tests of popping up multiple docs
@@ -49,8 +54,13 @@ module Railsthemes
         if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           email_installer.install_from_file_system filepath
           @installed_email = true
-        else
-          # no email to install... moving along
+        end
+
+        # install email theme if present
+        filepath = File.join(original_source_filepath, 'design-assets')
+        if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
+          asset_installer.install_from_file_system filepath
+          @installed_assets = true
         end
 
         print_post_installation_instructions

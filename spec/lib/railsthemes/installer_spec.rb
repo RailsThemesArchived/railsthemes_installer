@@ -20,6 +20,7 @@ describe Railsthemes::Installer do
     describe 'installing theme' do
       before do
         stub(@installer.email_installer).install_from_file_system(anything)
+        stub(@installer.asset_installer).install_from_file_system(anything)
       end
 
       it 'should install the right theme version' do
@@ -29,7 +30,6 @@ describe Railsthemes::Installer do
 
       it 'should install the right theme version if it is an archive in that directory' do
         mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/erb-css')
-        stub(@installer.email_installer).install_from_file_system(anything)
         @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
       end
     end
@@ -37,6 +37,7 @@ describe Railsthemes::Installer do
     describe 'installing email theme' do
       before do
         stub(@installer.theme_installer).install_from_file_system(anything)
+        stub(@installer.asset_installer).install_from_file_system(anything)
       end
 
       it 'should install the email theme if present' do
@@ -46,6 +47,23 @@ describe Railsthemes::Installer do
 
       it 'should install the archived email theme if present' do
         mock(@installer.email_installer).install_from_file_system('spec/fixtures/blank-assets-archived/email')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
+      end
+    end
+
+    describe 'installing design assets theme' do
+      before do
+        stub(@installer.theme_installer).install_from_file_system(anything)
+        stub(@installer.email_installer).install_from_file_system(anything)
+      end
+
+      it 'should install the design assets if present' do
+        mock(@installer.asset_installer).install_from_file_system('spec/fixtures/blank-assets/design-assets')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+      end
+
+      it 'should install the archived design assets if present' do
+        mock(@installer.asset_installer).install_from_file_system('spec/fixtures/blank-assets-archived/design-assets')
         @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
       end
     end
