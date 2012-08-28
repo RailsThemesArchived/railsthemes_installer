@@ -116,6 +116,11 @@ describe Railsthemes::Installer do
       mock(Railsthemes::Utils).download(:url => 'email_url', :save_to => "dir/email.tar.gz")
       @installer.download_from_hash({'email' => 'email_url'}, 'dir')
     end
+
+    it 'should download and install design assets when that is specified' do
+      mock(Railsthemes::Utils).download(:url => 'asset_url', :save_to => "dir/design-assets.tar.gz")
+      @installer.download_from_hash({'design_assets' => 'asset_url'}, 'dir')
+    end
   end
 
   describe '#install_from_code' do

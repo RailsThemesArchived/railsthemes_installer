@@ -5,8 +5,8 @@ module Railsthemes
       include Thor::Actions
 
       def install_from_file_system original_source_filepath
-        source_filepath = original_source_filepath.gsub(/\\/, '/')
         logger.warn 'Installing email theme...'
+        source_filepath = original_source_filepath.gsub(/\\/, '/')
         logger.info "Source filepath: #{source_filepath}"
 
         if File.directory?(source_filepath)

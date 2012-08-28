@@ -56,7 +56,7 @@ module Railsthemes
           @installed_email = true
         end
 
-        # install email theme if present
+        # install design assets if present
         filepath = File.join(original_source_filepath, 'design-assets')
         if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           asset_installer.install_from_file_system filepath
@@ -76,7 +76,7 @@ module Railsthemes
         dl_hash = get_download_hash code
 
         if dl_hash
-          logger.debug "dl_hash: #{dl_hash.to_s}"
+          logger.debug "dl_hash: #{dl_hash.inspect}"
           Utils.with_tempdir do |tempdir|
             download_from_hash dl_hash, tempdir
             install_from_file_system tempdir
@@ -123,6 +123,14 @@ module Railsthemes
           archive = File.join(download_to, 'email.tar.gz')
           Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading email theme."
+        end
+
+        url = dl_hash['design_assets']
+        if url
+          logger.warn "Downloading design assets..."
+          archive = File.join(download_to, 'design-assets.tar.gz')
+          Utils.download :url => url, :save_to => archive
+          logger.warn "Done downloading design assets."
         end
       end
 
