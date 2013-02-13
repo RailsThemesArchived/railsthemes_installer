@@ -11,6 +11,59 @@ describe Railsthemes::Installer do
     stub(Railsthemes::Ensurer).ensure_clean_install_possible
   end
 
+  describe 'initialization' do
+    describe 'server' do
+      it 'should default to production' do
+        installer = Railsthemes::Installer.new
+        installer.server.should == 'https://railsthemes.com'
+      end
+
+      it 'should be right when in staging' do
+        installer = Railsthemes::Installer.new(:staging => true)
+        installer.server.should == 'http://staging.railsthemes.com'
+      end
+
+      it 'should be right when in beta' do
+        installer = Railsthemes::Installer.new(:beta => true)
+        installer.server.should == 'http://beta.railsthemes.com'
+      end
+
+      it 'should be right when server passed in' do
+        installer = Railsthemes::Installer.new(:server => 'http://example.com')
+        installer.server.should == 'http://example.com'
+      end
+    end
+
+    describe 'documentation popup' do
+      it 'should pop up when it is not mentioned' do
+        installer = Railsthemes::Installer.new
+        installer.doc_popup.should be_true
+      end
+
+      it 'should not pop up when configured to not pop up' do
+        installer = Railsthemes::Installer.new(:no_doc_popup => true)
+        installer.doc_popup.should be_false
+      end
+
+      it 'should pop up when configured to pop up' do
+        installer = Railsthemes::Installer.new(:no_doc_popup => false)
+        installer.doc_popup.should be_true
+      end
+    end
+
+    describe 'knowing about new theme' do
+      it 'should think it is a new theme when the beta flag is set' do
+        installer = Railsthemes::Installer.new(:beta => true)
+        installer.new_theme.should be_true
+      end
+
+      it 'should not think it is a new theme when the beta flag is not set' do
+        installer = Railsthemes::Installer.new
+        installer.new_theme.should be_false
+      end
+    end
+  end
+
   describe :install_from_file_system do
     before do
       FakeFS::FileSystem.clone('spec/fixtures')

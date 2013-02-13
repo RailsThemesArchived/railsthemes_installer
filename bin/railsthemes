@@ -25,36 +25,25 @@ EOS
 
   desc "install your@email:code", "Install from RailsThemes.com using your download code"
   method_option :file,
-    :desc => "Use local relative pathname instead of a code, and install from there.",
-    :type => :boolean
+    :desc => "Install using local relative pathname instead of a code.", :type => :boolean
   method_option :staging,
-    :desc => "Hit the staging server instead of https://railsthemes.com.",
-    :type => :boolean
+    :desc => "Hit the staging server instead of https://railsthemes.com.", :type => :boolean
+  method_option :beta,
+    :desc => "Hit the beta server to install new theme configurations.", :type => :boolean
   method_option :server,
-    :desc => "Hit an arbitrary server instead of https://railsthemes.com.",
-    :type => :string
+    :desc => "Hit an arbitrary server instead of https://railsthemes.com.", :type => :string
   method_option :no_doc_popup,
-    :desc => "Do not pop up documentation on successful install.",
-    :type => :boolean
+    :desc => "Do not pop up documentation on successful install.", :type => :boolean
   method_option :verbose,
-    :desc => "Print more output on installation.",
-    :type => :boolean
+    :desc => "Print more output on installation.", :type => :boolean
   # do not rename to :debug, conflicts with Thor built-in functionality
   method_option :debugging,
-    :desc => "Print gratuitous output on installation (for debugging).",
-    :type => :boolean
+    :desc => "Print gratuitous output on installation (for debugging).", :type => :boolean
   def install code_or_file
-    # might be better to pass in the options directly if we get more options
-    installer = Railsthemes::Installer.new
+    installer = Railsthemes::Installer.new options
 
-    if options[:email]
-    end
-
-    installer.doc_popup = !options[:no_doc_popup]
     Railsthemes::Logging.verbose if options[:verbose]
     Railsthemes::Logging.debug if options[:debugging]
-    Railsthemes.server = 'http://staging.railsthemes.com' if options[:staging]
-    Railsthemes.server = options[:server] if options[:server]
 
     if options[:file]
       file = code_or_file

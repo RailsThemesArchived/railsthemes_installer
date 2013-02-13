@@ -12,7 +12,7 @@ module Railsthemes
       ensure_railsthemes_is_not_in_gemfile
       ensure_vcs_is_clean
       ensure_rails_version_is_valid
-      ensure_installer_is_up_to_date unless options[:hit_server] == false
+      ensure_installer_is_up_to_date(options[:server]) if options[:server]
       @@already_checked = true
     end
 
@@ -54,9 +54,9 @@ Please roll back or commit the changes before proceeding to ensure that you can 
       end
     end
 
-    def self.ensure_installer_is_up_to_date
+    def self.ensure_installer_is_up_to_date server
       logger.warn "Checking installer version..."
-      url = Railsthemes.server + '/installer/version'
+      url = server + '/installer/version'
       logger.debug "installer version url: #{url}"
       begin
         response = Utils.get_url url

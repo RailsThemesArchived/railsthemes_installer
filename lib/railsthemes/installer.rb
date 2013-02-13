@@ -4,13 +4,24 @@ module Railsthemes
       include Railsthemes::Logging
       include Thor::Actions
 
-      def initialize
-        @doc_popup = true
+      def initialize options = {}
         @installed_email = false
+        @doc_popup = !options[:no_doc_popup]
+        server = 'http://staging.railsthemes.com' if options[:staging]
+        if options[:beta]
+          server = 'http://beta.railsthemes.com'
+          @new_theme = true
+        end
+        server = options[:server] if options[:server]
+        server ||= 'https://railsthemes.com'
+        @server = server
       end
 
-      def doc_popup= doc_popup
-        @doc_popup = doc_popup
+      attr_accessor :doc_popup, :server, :new_theme
+
+      def server= server
+        Logging.logger.warn "Using server: #{@server}"
+        @server = server
       end
 
       # can probably just make static
@@ -38,8 +49,19 @@ module Railsthemes
       end
 
       def install_from_file_system original_source_filepath
-        Ensurer.ensure_clean_install_possible :hit_server => false
+        Ensurer.ensure_clean_install_possible :server => false
 
+        if @new_theme_type
+          install_new_railsthemes_theme original_source_filepath
+        else
+          install_old_railsthemes_theme original_source_filepath
+        end
+
+        print_post_installation_instructions
+        popup_documentation if @doc_popup
+      end
+
+      def install_old_railsthemes_theme original_source_filepath
         # install main theme
         config = Utils.get_primary_configuration
         filepath = File.join(original_source_filepath, config.join('-'))
@@ -62,13 +84,13 @@ module Railsthemes
           asset_installer.install_from_file_system filepath
           @installed_assets = true
         end
+      end
 
-        print_post_installation_instructions
-        popup_documentation if @doc_popup
+      def install_new_railsthemes_theme original_source_filepath
       end
 
       def install_from_code code
-        Ensurer.ensure_clean_install_possible :hit_server => true
+        Ensurer.ensure_clean_install_possible :server => @server
 
         logger.warn "Figuring out what to download..."
         send_gemfile code
@@ -86,10 +108,9 @@ module Railsthemes
         end
       end
 
-
       def get_download_hash code
         config = Utils.get_primary_configuration
-        server_request_url = "#{Railsthemes.server}/download?code=#{code}&config=#{config * ','}&v=2"
+        server_request_url = "#{@server}/download?code=#{code}&config=#{config * ','}&v=2"
         response = nil
         begin
           response = Utils.get_url server_request_url
@@ -137,7 +158,7 @@ module Railsthemes
       def send_gemfile code
         return nil unless File.exists?('Gemfile.lock')
         begin
-          RestClient.post("#{Railsthemes.server}/gemfiles/parse",
+          RestClient.post("#{@server}/gemfiles/parse",
             :code => code, :gemfile_lock => File.new('Gemfile.lock', 'rb'))
         rescue SocketError => e
           Safe.log_and_abort 'We could not reach the RailsThemes server to start your download. Please check your internet connection and try again.'

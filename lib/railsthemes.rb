@@ -19,12 +19,4 @@ require 'railsthemes/asset_installer'
 require 'railsthemes/ensurer'
 
 module Railsthemes
-  def self.server
-    @server ||= 'https://railsthemes.com'
-  end
-
-  def self.server= server
-    Logging.logger.warn "Using server: #{server}"
-    @server = server
-  end
 end
