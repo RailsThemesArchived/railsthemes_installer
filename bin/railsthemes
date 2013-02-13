@@ -14,6 +14,7 @@ class Installer < Thor
       puts Railsthemes::VERSION
     else
       puts <<-EOS
+Usage:
 railsthemes -v                       # Print the version of the installer gem you are using
 railsthemes install your@email:code  # Install from RailsThemes.com using your download code
 railsthemes help [TASK]              # Describe available tasks or one specific task

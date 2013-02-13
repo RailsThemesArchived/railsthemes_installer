@@ -1,9 +1,12 @@
 #!/usr/bin/env rake
-require "bundler/gem_tasks"
-
+require 'bundler/gem_tasks'
+require 'cucumber/rake/task'
 require 'rspec/core/rake_task'
 
-RSpec::Core::RakeTask.new('spec')
+Cucumber::Rake::Task.new do |t|
+  t.cucumber_opts = "--format pretty"
+end
+task :cuc => :cucumber
 
-# If you want to make this the default task
-task :default => :spec
+RSpec::Core::RakeTask.new(:spec)
+task :default => [:spec, :cucumber]
