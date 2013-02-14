@@ -8,35 +8,23 @@ module Railsthemes
         @installed_email = false
         @doc_popup = !options[:no_doc_popup]
         server = 'http://staging.railsthemes.com' if options[:staging]
-        if options[:beta]
-          server = 'http://beta.railsthemes.com'
-          @new_theme = true
-        end
+        server = 'http://beta.railsthemes.com' if options[:beta]
         server = options[:server] if options[:server]
         server ||= 'https://railsthemes.com'
+        server = nil if options[:file]
         @server = server
       end
 
-      attr_accessor :doc_popup, :server, :new_theme
+      attr_accessor :doc_popup, :server
 
       def server= server
-        Logging.logger.warn "Using server: #{@server}"
         @server = server
+        Logging.logger.warn "Using server: #{@server}"
       end
 
       # can probably just make static
       def theme_installer
         @theme_installer ||= ThemeInstaller.new
-      end
-
-      # can probably just make static
-      def email_installer
-        @email_installer ||= EmailInstaller.new
-      end
-
-      # can probably just make static
-      def asset_installer
-        @asset_installer ||= AssetInstaller.new
       end
 
       def popup_documentation
@@ -48,45 +36,19 @@ module Railsthemes
         end
       end
 
-      def install_from_file_system original_source_filepath
+      def install_from_file_system filepath
         Ensurer.ensure_clean_install_possible :server => false
 
-        if @new_theme_type
-          install_new_railsthemes_theme original_source_filepath
-        else
-          install_old_railsthemes_theme original_source_filepath
-        end
-
-        print_post_installation_instructions
-        popup_documentation if @doc_popup
-      end
-
-      def install_old_railsthemes_theme original_source_filepath
         # install main theme
         config = Utils.get_primary_configuration
-        filepath = File.join(original_source_filepath, config.join('-'))
         if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
           theme_installer.install_from_file_system filepath
         else
           Safe.log_and_abort "Could not find the file you need: #{filepath}"
         end
 
-        # install email theme if present
-        filepath = File.join(original_source_filepath, 'email')
-        if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
-          email_installer.install_from_file_system filepath
-          @installed_email = true
-        end
-
-        # install design assets if present
-        filepath = File.join(original_source_filepath, 'design-assets')
-        if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
-          asset_installer.install_from_file_system filepath
-          @installed_assets = true
-        end
-      end
-
-      def install_new_railsthemes_theme original_source_filepath
+        print_post_installation_instructions
+        popup_documentation if @doc_popup
       end
 
       def install_from_code code
@@ -136,22 +98,6 @@ module Railsthemes
           archive = File.join(download_to, "#{config.join('-')}.tar.gz")
           Utils.download :url => url, :save_to => archive
           logger.warn "Done downloading main theme."
-        end
-
-        url = dl_hash['email']
-        if url
-          logger.warn "Downloading email theme..."
-          archive = File.join(download_to, 'email.tar.gz')
-          Utils.download :url => url, :save_to => archive
-          logger.warn "Done downloading email theme."
-        end
-
-        url = dl_hash['design_assets']
-        if url
-          logger.warn "Downloading design assets..."
-          archive = File.join(download_to, 'design-assets.tar.gz')
-          Utils.download :url => url, :save_to => archive
-          logger.warn "Done downloading design assets."
         end
       end
 

@@ -50,74 +50,22 @@ describe Railsthemes::Installer do
         installer.doc_popup.should be_true
       end
     end
-
-    describe 'knowing about new theme' do
-      it 'should think it is a new theme when the beta flag is set' do
-        installer = Railsthemes::Installer.new(:beta => true)
-        installer.new_theme.should be_true
-      end
-
-      it 'should not think it is a new theme when the beta flag is not set' do
-        installer = Railsthemes::Installer.new
-        installer.new_theme.should be_false
-      end
-    end
   end
 
   describe :install_from_file_system do
     before do
       FakeFS::FileSystem.clone('spec/fixtures')
-      stub(Railsthemes::Utils).get_primary_configuration { ['erb', 'css'] }
     end
 
     describe 'installing theme' do
-      before do
-        stub(@installer.email_installer).install_from_file_system(anything)
-        stub(@installer.asset_installer).install_from_file_system(anything)
-      end
-
       it 'should install the right theme version' do
-        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets/erb-css')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets/tier1-erb-scss')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets/tier1-erb-scss'
       end
 
       it 'should install the right theme version if it is an archive in that directory' do
-        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/erb-css')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
-      end
-    end
-
-    describe 'installing email theme' do
-      before do
-        stub(@installer.theme_installer).install_from_file_system(anything)
-        stub(@installer.asset_installer).install_from_file_system(anything)
-      end
-
-      it 'should install the email theme if present' do
-        mock(@installer.email_installer).install_from_file_system('spec/fixtures/blank-assets/email')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets'
-      end
-
-      it 'should install the archived email theme if present' do
-        mock(@installer.email_installer).install_from_file_system('spec/fixtures/blank-assets-archived/email')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
-      end
-    end
-
-    describe 'installing design assets theme' do
-      before do
-        stub(@installer.theme_installer).install_from_file_system(anything)
-        stub(@installer.email_installer).install_from_file_system(anything)
-      end
-
-      it 'should install the design assets if present' do
-        mock(@installer.asset_installer).install_from_file_system('spec/fixtures/blank-assets/design-assets')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets'
-      end
-
-      it 'should install the archived design assets if present' do
-        mock(@installer.asset_installer).install_from_file_system('spec/fixtures/blank-assets-archived/design-assets')
-        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived'
+        mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/tier1-erb-scss')
+        @installer.install_from_file_system 'spec/fixtures/blank-assets-archived/tier1-erb-scss'
       end
     end
   end
@@ -128,23 +76,22 @@ describe Railsthemes::Installer do
       before do
         FakeFS::FileSystem.clone('spec/fixtures')
         stub(@installer.theme_installer).install_from_file_system(anything)
-        stub(@installer.email_installer).install_from_file_system(anything)
       end
 
       it 'should not pop it up when the user specified not to pop it up' do
         @installer.doc_popup = false
         dont_allow(@installer).popup_documentation
-        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+        @installer.install_from_file_system 'spec/fixtures/blank-assets/tier1-erb-scss'
       end
 
       it 'should pop it up when the user did not specify to not pop it up' do
         mock(@installer).popup_documentation
-        @installer.install_from_file_system 'spec/fixtures/blank-assets'
+        @installer.install_from_file_system 'spec/fixtures/blank-assets/tier1-erb-scss'
       end
     end
   end
 
-  describe 'popup_documentation' do
+  describe '#popup_documentation' do
     it 'should not open if the style guide does not exist' do
       dont_allow(Launchy).open(anything)
       @installer.popup_documentation
@@ -163,16 +110,6 @@ describe Railsthemes::Installer do
     it 'should download and install main theme when theme specified' do
       mock(Railsthemes::Utils).download(:url => 'theme_url', :save_to => "dir/erb-css.tar.gz")
       @installer.download_from_hash({'theme' => 'theme_url'}, 'dir')
-    end
-
-    it 'should download and install email theme when email specified' do
-      mock(Railsthemes::Utils).download(:url => 'email_url', :save_to => "dir/email.tar.gz")
-      @installer.download_from_hash({'email' => 'email_url'}, 'dir')
-    end
-
-    it 'should download and install design assets when that is specified' do
-      mock(Railsthemes::Utils).download(:url => 'asset_url', :save_to => "dir/design-assets.tar.gz")
-      @installer.download_from_hash({'design_assets' => 'asset_url'}, 'dir')
     end
   end
 

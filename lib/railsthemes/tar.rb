@@ -33,7 +33,7 @@ module Railsthemes
     end
 
     # gzips the underlying string in the given StringIO,
-    # returning a new StringIO representing the 
+    # returning a new StringIO representing the
     # compressed file.
     def self.gzip(tarfile)
       gz = StringIO.new("")

@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'logger'
 require 'fakefs/spec_helpers'
 require 'fakeweb'
+require 'rr'
 
 LOGFILE_NAME = 'railsthemes.log'
 
