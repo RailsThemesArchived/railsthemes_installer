@@ -66,6 +66,9 @@ module Railsthemes
       def post_copying_changes
         logger.info "Removing public/index.html"
         Utils.remove_file File.join('public', 'index.html')
+        Utils.remove_file File.join('public', '404.html')
+        Utils.remove_file File.join('public', '422.html')
+        Utils.remove_file File.join('public', '500.html')
         create_railsthemes_demo_pages
       end
 

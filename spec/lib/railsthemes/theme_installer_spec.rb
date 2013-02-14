@@ -220,4 +220,24 @@ end
       verify_end_to_end_operation
     end
   end
+
+  describe '#post_copying_changes' do
+    it 'should remove files we do not want hanging around' do
+      files = [
+        'public/index.html',
+        'public/404.html',
+        'public/422.html',
+        'public/500.html',
+      ]
+      files.each do |filename|
+        create_file filename
+      end
+
+      @installer.post_copying_changes
+
+      files.each do |filename|
+        File.should_not exist(filename), "#{filename} was expected to be gone, but it is still here"
+      end
+    end
+  end
 end
