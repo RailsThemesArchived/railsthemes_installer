@@ -12,6 +12,7 @@ module Railsthemes
     # copy a file, ensuring that the directory is present
     def self.copy_ensuring_directory_exists src, dest
       FileUtils.mkdir_p(File.dirname(dest)) # create directory if necessary
+      logger.debug "Copying #{src} to #{dest}"
       FileUtils.cp src, dest
     end
 

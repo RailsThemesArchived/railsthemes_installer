@@ -27,6 +27,7 @@ module Railsthemes
     end
 
     def copy_theme_portions source_filepath, file_mappings
+      logger.debug 'Copying theme portions...'
       file_mappings.each do |src_dir, dest_prefix|
         Dir["#{source_filepath}/#{src_dir}/**/*"].each do |src|
           dest = src.sub("#{source_filepath}", dest_prefix).sub(/^\//, '')
@@ -35,6 +36,7 @@ module Railsthemes
           end
         end
       end
+      logger.debug 'Done copying theme portions.'
     end
 
     def install_from_directory source_filepath
@@ -50,7 +52,7 @@ module Railsthemes
       ]
 
       logger.warn 'Done installing.'
-      return Utils.read_file(File.join(source_filepath, 'theme_name'))
+      return Utils.read_file(File.join(source_filepath, 'theme_name')).chomp
     end
 
     def post_copying_changes theme_name
@@ -72,6 +74,7 @@ module Railsthemes
       return if lines.grep(/Begin RailsThemes basic generated routes/).count > 0
 
       output = <<-EOS
+
   ### Begin RailsThemes basic generated routes ###
   # Routes to RailsThemes Theme Example markup:
   unless Rails.env.production?
@@ -136,7 +139,7 @@ EOS
           config_lines.each do |line|
             f.puts line
             if !added && (line =~ /Precompile additional assets/ || line =~ /config\.assets\.precompile/)
-              f.puts "config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
+              f.puts "  config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
               added = true
             end
           end
@@ -151,7 +154,7 @@ EOS
     end
 
     def system_file? src
-      src =~ /\/\./ # remove any pesky hidden files that crept into the archive
+      File.basename(src)[0,1] == '.' # remove any pesky hidden files that crept into the archive
     end
   end
 end
