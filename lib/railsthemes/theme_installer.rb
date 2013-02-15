@@ -38,11 +38,6 @@ module Railsthemes
     end
 
     def install_from_directory source_filepath
-      # this file causes issues when HAML is also present, and we overwrite
-      # it in the ERB case, so safe to delete before copying files
-      logger.debug 'Removing file app/views/layouts/application.html.erb'
-      Utils.remove_file('app/views/layouts/application.html.erb')
-
       copy_theme_portions source_filepath, [
         ['controllers', 'app'],
         ['helpers', 'app'],
