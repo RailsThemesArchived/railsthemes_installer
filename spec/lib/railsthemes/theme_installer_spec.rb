@@ -111,6 +111,12 @@ describe Railsthemes::ThemeInstaller do
         @installer.install_from_file_system('theme')
         File.should_not exist('app/controllers/.DS_Store')
       end
+
+      it 'should do the post copying changes needed' do
+        create_file 'theme/controllers'
+        mock(@installer).post_copying_changes
+        @installer.install_from_file_system('theme')
+      end
     end
 
     describe 'override file behavior' do
@@ -150,7 +156,7 @@ describe Railsthemes::ThemeInstaller do
     end
   end
 
-  describe '#create_railsthemes_demo_pages' do
+  describe '#create_railsthemes_demo_routes' do
     before do
       FileUtils.mkdir('config')
       File.open(File.join('config', 'routes.rb'), 'w') do |f|
@@ -165,7 +171,7 @@ end
     end
 
     it 'should insert lines into the routes file' do
-      @installer.create_railsthemes_demo_pages
+      @installer.create_railsthemes_demo_routes
       routes_file = File.join('config', 'routes.rb')
       lines = File.read(routes_file).split("\n")
       lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
@@ -174,8 +180,8 @@ end
     end
 
     it 'should not insert lines into the routes file when run more than once' do
-      @installer.create_railsthemes_demo_pages
-      @installer.create_railsthemes_demo_pages
+      @installer.create_railsthemes_demo_routes
+      @installer.create_railsthemes_demo_routes
       routes_file = File.join('config', 'routes.rb')
       lines = File.read(routes_file).split("\n")
       lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
@@ -221,7 +227,7 @@ end
     end
   end
 
-  describe '#post_copying_changes' do
+  describe '#remove_unwanted_public_files' do
     it 'should remove files we do not want hanging around' do
       files = [
         'public/index.html',
@@ -239,5 +245,10 @@ end
         File.should_not exist(filename), "#{filename} was expected to be gone, but it is still here"
       end
     end
+  end
+
+  describe '#add_needed_gems' do
+    it 'should require: sass, jquery-rails, jquery-ui-rails and foundation gems'
+    it 'should readd the gems if they are already present'
   end
 end
