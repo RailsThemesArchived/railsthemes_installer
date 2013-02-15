@@ -113,8 +113,8 @@ describe Railsthemes::ThemeInstaller do
       end
 
       it 'should do the post copying changes needed' do
-        create_file 'theme/controllers'
-        mock(@installer).post_copying_changes
+        create_file 'theme/theme_name', :content => 'themename'
+        mock(@installer).post_copying_changes('themename')
         @installer.install_from_file_system('theme')
       end
     end
@@ -198,7 +198,8 @@ describe Railsthemes::ThemeInstaller do
       mock(@installer).remove_unwanted_public_files
       mock(@installer).create_railsthemes_demo_routes
       mock(@installer).add_needed_gems
-      @installer.post_copying_changes
+      mock(@installer).set_layout_in_application_controller 'theme_name'
+      @installer.post_copying_changes 'theme_name'
     end
   end
 
@@ -253,7 +254,7 @@ RailsApp::Application.routes.draw do
   # match ':controller(/:action(/:id(.:format)))'
 end
       EOS
-      create_file 'config/routes.rb', contents
+      create_file 'config/routes.rb', :content => contents
     end
 
     it 'should add routing if it has not been generated yet' do
@@ -269,6 +270,45 @@ end
       File.read('config/routes.rb').split("\n").grep(
         /match 'railsthemes', :controller => :railsthemes, :action => :index/
       ).count.should == 1
+    end
+  end
+
+  describe '#set_layout_in_application_controller' do
+    before do
+      @base = <<-EOS
+class ApplicationController < ActionController::Base
+  protect_from_forgery
+      EOS
+    end
+
+    it 'should add the layout line if it does not exist' do
+      create_file 'app/controllers/application_controller.rb', :content => "#{@base}\nend"
+      @installer.set_layout_in_application_controller('magenta')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
+    end
+
+    it 'should modify the layout line if it exists but different' do
+      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
+#{@base}
+  layout 'railsthemes_orange'
+end
+      EOS
+      @installer.set_layout_in_application_controller('magenta')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_orange'/).count.should == 0
+      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
+    end
+
+    it 'should not modify the layout line if it exists and same' do
+      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
+#{@base}
+  layout 'railsthemes_orange'
+end
+      EOS
+      @installer.set_layout_in_application_controller('orange')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_orange'/).count.should == 1
     end
   end
 end

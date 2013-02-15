@@ -19,6 +19,10 @@ module Railsthemes
       File.exists?(filepath) ? File.read(filepath) : ''
     end
 
+    def self.lines filepath
+      read_file(filepath).split("\n")
+    end
+
     # would be nice to put download status in the output (speed, progress, etc.)
     # needs tests
     def self.download params = {}
@@ -106,7 +110,7 @@ module Railsthemes
     end
 
     def self.insert_into_routes_file! to_insert
-      lines = read_file('config/routes.rb').split("\n")
+      lines = lines('config/routes.rb')
       last = lines.pop
       lines += to_insert
       lines << last

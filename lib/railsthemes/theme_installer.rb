@@ -14,15 +14,16 @@ module Railsthemes
       logger.warn 'Installing main theme...'
       logger.info "Source filepath: #{source_filepath}"
 
+      theme_name = nil
       if File.directory?(source_filepath)
-        install_from_directory source_filepath
+        theme_name = install_from_directory source_filepath
       elsif Utils.archive?(source_filepath + '.tar.gz')
         install_from_archive(source_filepath + '.tar.gz')
       else
         Safe.log_and_abort 'Expected either a directory or archive.'
       end
 
-      post_copying_changes
+      post_copying_changes(theme_name)
     end
 
     def copy_theme_portions source_filepath, file_mappings
@@ -54,23 +55,24 @@ module Railsthemes
       ]
 
       logger.warn 'Done installing.'
+      return Utils.read_file(File.join(source_filepath, 'theme_name'))
     end
 
-    def post_copying_changes
+    def post_copying_changes theme_name
       remove_unwanted_public_files
       create_railsthemes_demo_routes
       add_needed_gems
+      set_layout_in_application_controller theme_name
     end
 
     def remove_unwanted_public_files
-      Utils.remove_file 'public/index.html'
-      Utils.remove_file 'public/404.html'
-      Utils.remove_file 'public/422.html'
-      Utils.remove_file 'public/500.html'
+      ['index', '404', '422', '500'].each do |filename|
+        Utils.remove_file "public/#{filename}.html"
+      end
     end
 
     def create_railsthemes_demo_routes
-      lines = Utils.read_file('config/routes.rb').split("\n")
+      lines = Utils.lines('config/routes.rb')
       return if lines.grep(/Begin RailsThemes basic generated routes/).count > 0
 
       output = <<-EOS
@@ -99,6 +101,32 @@ EOS
       installed_gems = Utils.gemspecs.map(&:name)
       ['sass', 'jquery-rails', 'jquery-ui-rails', 'foundation'].each do |gemname|
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
+      end
+    end
+
+    def set_layout_in_application_controller theme_name
+      ac_lines = Utils.lines('app/controllers/application_controller.rb')
+      count = ac_lines.grep(/^\s*layout 'railsthemes/).count
+      if count == 0 # layout line not found, add it
+        FileUtils.mkdir_p('app/controllers')
+        File.open('app/controllers/application_controller.rb', 'w') do |f|
+          ac_lines.each do |line|
+            f.puts line
+            f.puts "  layout 'railsthemes_#{theme_name}'" if line =~ /^class ApplicationController/
+          end
+        end
+      elsif count == 1 # layout line found, change it if necessary
+        File.open('app/controllers/application_controller.rb', 'w') do |f|
+          ac_lines.each do |line|
+            if line =~ /^\s*layout 'railsthemes_/
+              f.puts "  layout 'railsthemes_#{theme_name}'"
+            else
+              f.puts line
+            end
+          end
+        end
+      else
+        # multiple layout lines, not sure what to do here
       end
     end
 

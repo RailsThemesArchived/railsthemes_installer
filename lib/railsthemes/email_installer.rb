@@ -22,7 +22,7 @@ module Railsthemes
       }
 
       if File.exists?(File.join('config', 'routes.rb'))
-        lines = Utils.read_file('config/routes.rb').split("\n")
+        lines = Utils.lines('config/routes.rb')
         to_insert = []
         routes_hash.each do |first, second|
           if lines.grep(/#{second}/).empty?
