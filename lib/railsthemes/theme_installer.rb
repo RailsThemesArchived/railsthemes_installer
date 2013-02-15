@@ -25,17 +25,12 @@ module Railsthemes
       post_copying_changes
     end
 
-    def copy_theme_portions source_filepath, file_map
-      file_map.each do |chunk, prefix|
-        Dir["#{source_filepath}/#{chunk}/**/*"].each do |src|
-          dest = src.sub("#{source_filepath}", prefix)
-          dest.gsub!(/^\//, '') # remove / at beginning of file prefix
-          if File.file?(src)
-            unless (dest =~ /overrides/ && File.exists?(dest)) ||
-                src =~ /\/\./ # remove any pesky hidden files that crept into the archive
-              FileUtils.mkdir_p(File.dirname(dest))
-              FileUtils.cp(src, dest)
-            end
+    def copy_theme_portions source_filepath, file_mappings
+      file_mappings.each do |src_dir, dest_prefix|
+        Dir["#{source_filepath}/#{src_dir}/**/*"].each do |src|
+          dest = src.sub("#{source_filepath}", dest_prefix).sub(/^\//, '')
+          if File.file?(src) && !override?(dest) && !system_file?(src)
+            Utils.copy_ensuring_directory_exists(src, dest)
           end
         end
       end
@@ -44,7 +39,7 @@ module Railsthemes
     def install_from_directory source_filepath
       # this file causes issues when HAML is also present, and we overwrite
       # it in the ERB case, so safe to delete before copying files
-      logger.debug 'removing file app/views/layouts/application.html.erb'
+      logger.debug 'Removing file app/views/layouts/application.html.erb'
       Utils.remove_file('app/views/layouts/application.html.erb')
 
       copy_theme_portions source_filepath, [
@@ -75,7 +70,7 @@ module Railsthemes
     end
 
     def create_railsthemes_demo_routes
-      logger.warn 'Creating RailsThemes demo pages...'
+      logger.warn 'Creating RailsThemes routes...'
 
       Utils.conditionally_insert_routes({
         'railsthemes/landing' => 'railsthemes#landing',
@@ -83,10 +78,26 @@ module Railsthemes
         'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'
       })
 
-      logger.warn 'Done creating RailsThemes demo pages.'
+      logger.warn 'Done creating RailsThemes routes.'
     end
 
+    # General assumption is `bundler check` is always clean prior to installation (via ensurer),
+    # so if the gemspecs are in the Gemfile.lock, then the gem is in the Gemfile
     def add_needed_gems
+      installed_gems = Utils.gemspecs.map(&:name)
+      ['sass', 'jquery-rails', 'jquery-ui-rails', 'foundation'].each do |gemname|
+        Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
+      end
+    end
+
+    private
+
+    def override? dest
+      dest =~ /overrides/ && File.exists?(dest)
+    end
+
+    def system_file? src
+      src =~ /\/\./ # remove any pesky hidden files that crept into the archive
     end
   end
 end

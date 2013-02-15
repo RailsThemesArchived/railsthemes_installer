@@ -28,6 +28,19 @@ end
 
 FakeWeb.allow_net_connect = false
 
+def write_gemfiles_using_gems *gems
+  File.open('Gemfile', 'a') do |f|
+    f.puts "source :rubygems"
+    gems.each do |gemname|
+      f.puts "gem '#{gemname}'"
+    end
+  end
+
+  File.open('Gemfile.lock', 'w') do |f|
+    f.write using_gems(*gems)
+  end
+end
+
 def using_gems *gems
   "GEM\nremote: https://rubygems.org/\nspecs:\n" +
     gems.map{|gem| "    #{gem}"}.join("\n") +

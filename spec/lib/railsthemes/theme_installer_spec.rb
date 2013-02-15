@@ -227,6 +227,15 @@ end
     end
   end
 
+  describe '#post_copying_changes' do
+    it 'should call the right submethods' do
+      mock(@installer).remove_unwanted_public_files
+      mock(@installer).create_railsthemes_demo_routes
+      mock(@installer).add_needed_gems
+      @installer.post_copying_changes
+    end
+  end
+
   describe '#remove_unwanted_public_files' do
     it 'should remove files we do not want hanging around' do
       files = [
@@ -239,7 +248,7 @@ end
         create_file filename
       end
 
-      @installer.post_copying_changes
+      @installer.remove_unwanted_public_files
 
       files.each do |filename|
         File.should_not exist(filename), "#{filename} was expected to be gone, but it is still here"
@@ -248,7 +257,24 @@ end
   end
 
   describe '#add_needed_gems' do
-    it 'should require: sass, jquery-rails, jquery-ui-rails and foundation gems'
-    it 'should readd the gems if they are already present'
+    it 'should require sass, jquery-rails, jquery-ui-rails and foundation gems' do
+      create_file 'Gemfile'
+      @installer.add_needed_gems
+      lines = File.read('Gemfile').split("\n")
+      lines.grep("gem 'sass'").count.should == 1
+      lines.grep("gem 'jquery-rails'").count.should == 1
+      lines.grep("gem 'jquery-ui-rails'").count.should == 1
+      lines.grep("gem 'foundation'").count.should == 1
+    end
+
+    it 'should not readd the gems if they are already present' do
+      write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails', 'foundation'
+      @installer.add_needed_gems
+      lines = File.read('Gemfile').split("\n")
+      lines.grep("gem 'sass'").count.should == 1
+      lines.grep("gem 'jquery-rails'").count.should == 1
+      lines.grep("gem 'jquery-ui-rails'").count.should == 1
+      lines.grep("gem 'foundation'").count.should == 1
+    end
   end
 end
