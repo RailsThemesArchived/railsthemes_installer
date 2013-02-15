@@ -63,6 +63,7 @@ module Railsthemes
       create_railsthemes_demo_routes
       add_needed_gems
       set_layout_in_application_controller theme_name
+      add_to_asset_precompilation_list theme_name
     end
 
     def remove_unwanted_public_files
@@ -127,6 +128,24 @@ EOS
         end
       else
         # multiple layout lines, not sure what to do here
+      end
+    end
+
+    def add_to_asset_precompilation_list theme_name
+      config_lines = Utils.lines('config/environments/production.rb')
+      count = config_lines.grep(/^\s*config.assets.precompile \+= %w\( railsthemes_#{theme_name}\.js railsthemes_#{theme_name}\.css \)$/).count
+      if count == 0 # precompile line we want not found, add it
+        FileUtils.mkdir_p('config/environments')
+        added = false # only want to add the new line once
+        File.open('config/environments/production.rb', 'w') do |f|
+          config_lines.each do |line|
+            f.puts line
+            if !added && (line =~ /Precompile additional assets/ || line =~ /config\.assets\.precompile/)
+              f.puts "config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
+              added = true
+            end
+          end
+        end
       end
     end
 

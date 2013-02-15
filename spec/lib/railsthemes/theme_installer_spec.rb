@@ -199,6 +199,7 @@ describe Railsthemes::ThemeInstaller do
       mock(@installer).create_railsthemes_demo_routes
       mock(@installer).add_needed_gems
       mock(@installer).set_layout_in_application_controller 'theme_name'
+      mock(@installer).add_to_asset_precompilation_list 'theme_name'
       @installer.post_copying_changes 'theme_name'
     end
   end
@@ -311,4 +312,48 @@ end
       lines.grep(/layout 'railsthemes_orange'/).count.should == 1
     end
   end
+
+  describe '#add_to_asset_precompilation_list' do
+    it 'should add it to the list if the line is not there yet' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+    end
+
+    it 'should not add it again if the line is there already' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  config.assets.precompile += %w( railsthemes_magenta.js railsthemes_magenta.css )
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+    end
+
+    it 'should add it to the list if there is a different theme already installed' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  config.assets.precompile += %w( railsthemes_orange.js railsthemes_orange.css )
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+    end
+  end
+
 end
