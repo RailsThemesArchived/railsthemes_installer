@@ -70,15 +70,27 @@ module Railsthemes
     end
 
     def create_railsthemes_demo_routes
-      logger.warn 'Creating RailsThemes routes...'
+      lines = Utils.read_file('config/routes.rb').split("\n")
+      return if lines.grep(/Begin RailsThemes basic generated routes/).count > 0
 
-      Utils.conditionally_insert_routes({
-        'railsthemes/landing' => 'railsthemes#landing',
-        'railsthemes/inner' => 'railsthemes#inner',
-        'railsthemes/jquery_ui' => 'railsthemes#jquery_ui'
-      })
+      output = <<-EOS
+  ### Begin RailsThemes basic generated routes ###
+  # Routes to RailsThemes Theme Example markup:
+  unless Rails.env.production?
+    match 'railsthemes', :controller => :railsthemes, :action => :index
+    match 'railsthemes/:action', :controller => :railsthemes
+  end
 
-      logger.warn 'Done creating RailsThemes routes.'
+  # This is magical routing for errors (instead of using the static markup in
+  # public/*.html)
+  match '/403', :to => 'railsthemes_errors#403_forbidden'
+  match '/404', :to => 'railsthemes_errors#404_not_found'
+  match '/500', :to => 'railsthemes_errors#500_internal_server_error'
+  ### End RailsThemes basic generated routes ###
+EOS
+      logger.warn 'Creating basic RailsThemes routes...'
+      Utils.insert_into_routes_file! output.split("\n")
+      logger.warn 'Done creating basic RailsThemes routes.'
     end
 
     # General assumption is `bundler check` is always clean prior to installation (via ensurer),

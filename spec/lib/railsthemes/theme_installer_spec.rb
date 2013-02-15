@@ -156,40 +156,6 @@ describe Railsthemes::ThemeInstaller do
     end
   end
 
-  describe '#create_railsthemes_demo_routes' do
-    before do
-      FileUtils.mkdir('config')
-      File.open(File.join('config', 'routes.rb'), 'w') do |f|
-        f.write <<-EOS
-RailsApp::Application.routes.draw do
-  # This is a legacy wild controller route that's not recommended for RESTful applications.
-  # Note: This route will make all actions in every controller accessible via GET requests.
-  # match ':controller(/:action(/:id(.:format)))'
-end
-        EOS
-      end
-    end
-
-    it 'should insert lines into the routes file' do
-      @installer.create_railsthemes_demo_routes
-      routes_file = File.join('config', 'routes.rb')
-      lines = File.read(routes_file).split("\n")
-      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
-      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
-      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
-    end
-
-    it 'should not insert lines into the routes file when run more than once' do
-      @installer.create_railsthemes_demo_routes
-      @installer.create_railsthemes_demo_routes
-      routes_file = File.join('config', 'routes.rb')
-      lines = File.read(routes_file).split("\n")
-      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
-      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
-      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
-    end
-  end
-
   # this should arguably be an integration test, but I'm not sure how
   # fakefs + running arbitrary binaries will work out
   describe 'end to end behavior' do
@@ -275,6 +241,34 @@ end
       lines.grep("gem 'jquery-rails'").count.should == 1
       lines.grep("gem 'jquery-ui-rails'").count.should == 1
       lines.grep("gem 'foundation'").count.should == 1
+    end
+  end
+
+  describe '#create_railsthemes_demo_routes' do
+    before do
+      contents = <<-EOS
+RailsApp::Application.routes.draw do
+  # This is a legacy wild controller route that's not recommended for RESTful applications.
+  # Note: This route will make all actions in every controller accessible via GET requests.
+  # match ':controller(/:action(/:id(.:format)))'
+end
+      EOS
+      create_file 'config/routes.rb', contents
+    end
+
+    it 'should add routing if it has not been generated yet' do
+      @installer.create_railsthemes_demo_routes
+      File.read('config/routes.rb').split("\n").grep(
+        /match 'railsthemes', :controller => :railsthemes, :action => :index/
+      ).count.should == 1
+    end
+
+    it 'should not readd routing' do
+      @installer.create_railsthemes_demo_routes
+      @installer.create_railsthemes_demo_routes
+      File.read('config/routes.rb').split("\n").grep(
+        /match 'railsthemes', :controller => :railsthemes, :action => :index/
+      ).count.should == 1
     end
   end
 end
