@@ -53,11 +53,11 @@ describe Railsthemes::Utils do
   describe 'add_gem_to_gemfile' do
     it 'should add the gem to the Gemfile' do
       Railsthemes::Utils.add_gem_to_gemfile 'test'
-      Railsthemes::Utils.add_gem_to_gemfile 'test'
+      Railsthemes::Utils.add_gem_to_gemfile 'test2'
       lines = File.open('Gemfile').readlines.map(&:strip)
       lines.count.should == 2
-      lines[0].should == "gem 'test'"
-      lines[1].should == "gem 'test'"
+      lines[0].should =~ /^gem 'test'/
+      lines[1].should =~ /^gem 'test2'/
     end
   end
 

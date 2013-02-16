@@ -49,6 +49,7 @@ module Railsthemes
         ['doc', ''],
         ['images', 'app/assets'],
         ['mailers', 'app'],
+        ['views', 'app'],
       ]
 
       logger.warn 'Done installing.'
@@ -69,10 +70,7 @@ module Railsthemes
       end
     end
 
-    def create_railsthemes_demo_routes
-      lines = Utils.lines('config/routes.rb')
-      return if lines.grep(/Begin RailsThemes basic generated routes/).count > 0
-
+    def basic_route_lines
       output = <<-EOS
 
   ### Begin RailsThemes basic generated routes ###
@@ -88,9 +86,24 @@ module Railsthemes
   match '/404', :to => 'railsthemes_errors#404_not_found'
   match '/500', :to => 'railsthemes_errors#500_internal_server_error'
   ### End RailsThemes basic generated routes ###
-EOS
+      EOS
+      output.split("\n")
+    end
+
+    def create_railsthemes_demo_routes
+      lines = Utils.lines('config/routes.rb')
+      lines_to_insert = []
+
+      if lines.grep(/Begin RailsThemes basic generated routes/).count == 0
+        lines_to_insert += basic_route_lines
+      end
+
+      if lines.grep(/^\s*root /).count == 0
+        lines_to_insert << '  root :to => "railsthemes#index"'
+      end
+
       logger.warn 'Creating basic RailsThemes routes...'
-      Utils.insert_into_routes_file! output.split("\n")
+      Utils.insert_into_routes_file! lines_to_insert
       logger.warn 'Done creating basic RailsThemes routes.'
     end
 
@@ -98,8 +111,11 @@ EOS
     # so if the gemspecs are in the Gemfile.lock, then the gem is in the Gemfile
     def add_needed_gems
       installed_gems = Utils.gemspecs.map(&:name)
-      ['sass', 'jquery-rails', 'jquery-ui-rails', 'foundation'].each do |gemname|
+      ['sass', 'jquery-rails', 'jquery-ui-rails'].each do |gemname|
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
+      end
+      ['compass-rails', 'zurb-foundation'].each do |gemname|
+        Utils.add_gem_to_gemfile(gemname, :group => 'assets') unless installed_gems.include?(gemname)
       end
     end
 
@@ -131,7 +147,7 @@ EOS
 
     def add_to_asset_precompilation_list theme_name
       config_lines = Utils.lines('config/environments/production.rb')
-      count = config_lines.grep(/^\s*config.assets.precompile \+= %w\( railsthemes_#{theme_name}\.js railsthemes_#{theme_name}\.css \)$/).count
+      count = config_lines.grep(/^\s*config.assets.precompile\s*\+=\s*%w\(\s*railsthemes_#{theme_name}\.js\s+railsthemes_#{theme_name}\.css\s*\)$/).count
       if count == 0 # precompile line we want not found, add it
         FileUtils.mkdir_p('config/environments')
         added = false # only want to add the new line once

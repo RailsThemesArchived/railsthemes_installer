@@ -92,6 +92,12 @@ describe Railsthemes::ThemeInstaller do
           @installer.install_from_file_system('theme')
           filesystem_should_match ['app/mailers/mailer.rb']
         end
+
+        it 'should copy views' do
+          create_file 'theme/views/railsthemes_themename/view1.html.erb'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/views/railsthemes_themename/view1.html.erb']
+        end
       end
 
       it 'should handle directories that have spaces' do
@@ -225,24 +231,68 @@ describe Railsthemes::ThemeInstaller do
   end
 
   describe '#add_needed_gems' do
-    it 'should require sass, jquery-rails, jquery-ui-rails and foundation gems' do
-      create_file 'Gemfile'
-      @installer.add_needed_gems
-      lines = File.read('Gemfile').split("\n")
-      lines.grep("gem 'sass'").count.should == 1
-      lines.grep("gem 'jquery-rails'").count.should == 1
-      lines.grep("gem 'jquery-ui-rails'").count.should == 1
-      lines.grep("gem 'foundation'").count.should == 1
+    describe 'general gems' do
+      context 'are not present' do
+        it 'should require them' do
+          create_file 'Gemfile'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/^gem 'sass'/).count.should == 1
+          lines.grep(/^gem 'jquery-rails'/).count.should == 1
+          lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+        end
+      end
+
+      context 'are present' do
+        it 'should not readd them' do
+          write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/^gem 'sass'/).count.should == 1
+          lines.grep(/^gem 'jquery-rails'/).count.should == 1
+          lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+        end
+      end
     end
 
-    it 'should not readd the gems if they are already present' do
-      write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails', 'foundation'
-      @installer.add_needed_gems
-      lines = File.read('Gemfile').split("\n")
-      lines.grep("gem 'sass'").count.should == 1
-      lines.grep("gem 'jquery-rails'").count.should == 1
-      lines.grep("gem 'jquery-ui-rails'").count.should == 1
-      lines.grep("gem 'foundation'").count.should == 1
+    describe 'asset gems' do
+      context 'gems are not present' do
+        it 'should add them' do
+          create_file 'Gemfile'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
+
+      context 'gems are present' do
+        it 'should not add them' do
+          write_gemfiles_using_gems :assets => ['compass-rails', 'zurb-foundation']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
+
+      context 'only one is present' do
+        it 'should add compass-rails if not present' do
+          write_gemfiles_using_gems :assets => ['zurb-foundation']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+
+        it 'should add zurb-foundation if not present' do
+          write_gemfiles_using_gems :assets => ['compass-rails']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
     end
   end
 
@@ -253,6 +303,7 @@ RailsApp::Application.routes.draw do
   # This is a legacy wild controller route that's not recommended for RESTful applications.
   # Note: This route will make all actions in every controller accessible via GET requests.
   # match ':controller(/:action(/:id(.:format)))'
+  # root :to => 'home/index'
 end
       EOS
       create_file 'config/routes.rb', :content => contents
@@ -271,6 +322,25 @@ end
       File.read('config/routes.rb').split("\n").grep(
         /match 'railsthemes', :controller => :railsthemes, :action => :index/
       ).count.should == 1
+    end
+
+    context 'when no root route exists' do
+      it 'should add root route' do
+        @installer.create_railsthemes_demo_routes
+        File.read('config/routes.rb').split("\n").grep(
+          '  root :to => "railsthemes#index"'
+        ).count.should == 1
+      end
+    end
+
+    context 'when root route exists' do
+      it 'should not add another root route' do
+        @installer.create_railsthemes_demo_routes
+        @installer.create_railsthemes_demo_routes
+        File.read('config/routes.rb').split("\n").grep(
+          '  root :to => "railsthemes#index"'
+        ).count.should == 1
+      end
     end
   end
 

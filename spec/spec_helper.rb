@@ -31,13 +31,34 @@ FakeWeb.allow_net_connect = false
 def write_gemfiles_using_gems *gems
   File.open('Gemfile', 'a') do |f|
     f.puts "source :rubygems"
-    gems.each do |gemname|
-      f.puts "gem '#{gemname}'"
+    gems.each do |gem|
+      if gem.is_a? Hash
+        gem.each do |group, inner_gems|
+          f.puts "group :#{group.to_s} do"
+          inner_gems.each do |gemname|
+            f.puts "  gem '#{gemname}'"
+          end
+          f.puts "end\n"
+        end
+      else
+        f.puts "gem '#{gem.to_s}'"
+      end
     end
   end
 
+  gem_names = *gems.map do |gem|
+    if gem.is_a? Hash
+      gems = []
+      gem.each do |group, inner_gems|
+        gems += inner_gems
+      end
+      gems
+    else
+      gem
+    end
+  end.flatten
   File.open('Gemfile.lock', 'w') do |f|
-    f.write using_gems(*gems)
+    f.write using_gems(*gem_names)
   end
 end
 
