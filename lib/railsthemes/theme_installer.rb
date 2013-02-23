@@ -62,6 +62,7 @@ module Railsthemes
       add_needed_gems
       set_layout_in_application_controller theme_name
       add_to_asset_precompilation_list theme_name
+      comment_out_formtastic_if_user_does_not_use_formtastic theme_name
     end
 
     def remove_unwanted_public_files
@@ -157,6 +158,23 @@ module Railsthemes
             if !added && (line =~ /Precompile additional assets/ || line =~ /config\.assets\.precompile/)
               f.puts "  config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
               added = true
+            end
+          end
+        end
+      end
+    end
+
+    def comment_out_formtastic_if_user_does_not_use_formtastic theme_name
+      return if (Utils.gemspecs.map(&:name) & ['formtastic']).count > 0
+      filename = "app/assets/stylesheets/railsthemes_#{theme_name}.css"
+      if File.exist?(filename)
+        lines = File.read(filename)
+        File.open(filename, 'w') do |f|
+          lines.each do |line|
+            if line =~ /\*= require formtastic/
+              f.puts ' * require formtastic'
+            else
+              f.puts line
             end
           end
         end

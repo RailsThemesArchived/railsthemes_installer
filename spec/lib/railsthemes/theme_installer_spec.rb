@@ -206,6 +206,7 @@ describe Railsthemes::ThemeInstaller do
       mock(@installer).add_needed_gems
       mock(@installer).set_layout_in_application_controller 'theme_name'
       mock(@installer).add_to_asset_precompilation_list 'theme_name'
+      mock(@installer).comment_out_formtastic_if_user_does_not_use_formtastic 'theme_name'
       @installer.post_copying_changes 'theme_name'
     end
   end
@@ -423,6 +424,35 @@ end
       count = File.read('config/environments/production.rb').split("\n").grep(
   /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
       count.should == 1
+    end
+  end
+
+  describe '#comment_out_formtastic_if_user_does_not_use_formtastic' do
+    before do
+      @filename = 'app/assets/stylesheets/railsthemes_themename.css'
+      create_file @filename, :content => <<-EOS
+/*
+ *= require formtastic
+ */
+      EOS
+    end
+
+    context 'user is using formtastic' do
+      before do
+      end
+
+      it 'should not comment out the line' do
+        write_gemfiles_using_gems 'formtastic'
+        @installer.comment_out_formtastic_if_user_does_not_use_formtastic 'themename'
+        File.read(@filename).split("\n").grep(/\*= require formtastic/).count.should == 1
+      end
+    end
+
+    context 'user is not using formtastic' do
+      it 'should comment out the line' do
+        @installer.comment_out_formtastic_if_user_does_not_use_formtastic 'themename'
+        File.read(@filename).split("\n").grep(/\* require formtastic/).count.should == 1
+      end
     end
   end
 
