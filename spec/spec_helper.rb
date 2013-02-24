@@ -104,3 +104,17 @@ def with_installer_version version, &block
   Railsthemes.send(:remove_const, 'VERSION')
   Railsthemes.const_set('VERSION', old_version)
 end
+
+def create_file filename, opts = {}
+  FileUtils.mkdir_p(File.dirname(filename))
+  FileUtils.touch(filename)
+  File.open(filename, 'w') { |f| f.write opts[:content] } if opts[:content]
+end
+
+def filesystem
+  Dir["**/*"]
+end
+
+def filesystem_should_match files_to_match
+  (filesystem & files_to_match).should =~ files_to_match
+end

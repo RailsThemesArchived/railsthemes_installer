@@ -124,15 +124,14 @@ module Railsthemes
       ac_lines = Utils.lines('app/controllers/application_controller.rb')
       count = ac_lines.grep(/^\s*layout 'railsthemes/).count
       if count == 0 # layout line not found, add it
-        FileUtils.mkdir_p('app/controllers')
-        File.open('app/controllers/application_controller.rb', 'w') do |f|
+        Utils.safe_write('app/controllers/application_controller.rb') do |f|
           ac_lines.each do |line|
             f.puts line
             f.puts "  layout 'railsthemes_#{theme_name}'" if line =~ /^class ApplicationController/
           end
         end
       elsif count == 1 # layout line found, change it if necessary
-        File.open('app/controllers/application_controller.rb', 'w') do |f|
+        Utils.safe_write('app/controllers/application_controller.rb') do |f|
           ac_lines.each do |line|
             if line =~ /^\s*layout 'railsthemes_/
               f.puts "  layout 'railsthemes_#{theme_name}'"
@@ -150,9 +149,8 @@ module Railsthemes
       config_lines = Utils.lines('config/environments/production.rb')
       count = config_lines.grep(/^\s*config.assets.precompile\s*\+=\s*%w\(\s*railsthemes_#{theme_name}\.js\s+railsthemes_#{theme_name}\.css\s*\)$/).count
       if count == 0 # precompile line we want not found, add it
-        FileUtils.mkdir_p('config/environments')
         added = false # only want to add the new line once
-        File.open('config/environments/production.rb', 'w') do |f|
+        Utils.safe_write('config/environments/production.rb') do |f|
           config_lines.each do |line|
             f.puts line
             if !added && (line =~ /Precompile additional assets/ || line =~ /config\.assets\.precompile/)
@@ -167,15 +165,12 @@ module Railsthemes
     def comment_out_formtastic_if_user_does_not_use_formtastic theme_name
       return if (Utils.gemspecs.map(&:name) & ['formtastic']).count > 0
       filename = "app/assets/stylesheets/railsthemes_#{theme_name}.css"
-      if File.exist?(filename)
-        lines = File.read(filename)
-        File.open(filename, 'w') do |f|
-          lines.each do |line|
-            if line =~ /\*= require formtastic/
-              f.puts ' * require formtastic'
-            else
-              f.puts line
-            end
+      Utils.safe_read_and_write(filename) do |lines, f|
+        lines.each do |line|
+          if line =~ /\*= require formtastic/
+            f.puts ' * require formtastic'
+          else
+            f.puts line
           end
         end
       end

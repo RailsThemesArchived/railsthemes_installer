@@ -25,6 +25,10 @@ module Railsthemes
       @theme_installer ||= ThemeInstaller.new
     end
 
+    def email_installer
+      @email_installer ||= EmailInstaller.new
+    end
+
     def popup_documentation
       style_guides = Dir['doc/*Usage_And_Style_Guide.html']
       # need better tests of popping up multiple docs
@@ -40,9 +44,16 @@ module Railsthemes
       # install main theme
       if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
         theme_installer.install_from_file_system filepath
+        if Dir['app/mailers/railsthemes*'].count > 0
+          email_installer.install
+        end
       else
         Safe.log_and_abort "Could not find the file you need: #{filepath}"
       end
+
+      logger.warn 'Bundling to install gems...'
+      Safe.system_call 'bundle'
+      logger.warn 'Done bundling.'
 
       print_post_installation_instructions
       popup_documentation if @doc_popup

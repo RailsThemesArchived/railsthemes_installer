@@ -9,6 +9,7 @@ describe Railsthemes::Installer do
     @tempdir = stub_tempdir
 
     stub(Railsthemes::Ensurer).ensure_clean_install_possible
+    stub(Railsthemes::Safe).system_call('bundle')
   end
 
   describe 'initialization' do
@@ -66,6 +67,23 @@ describe Railsthemes::Installer do
       it 'should install the right theme version if it is an archive in that directory' do
         mock(@installer.theme_installer).install_from_file_system('spec/fixtures/blank-assets-archived/tier1-erb-scss')
         @installer.install_from_file_system 'spec/fixtures/blank-assets-archived/tier1-erb-scss'
+      end
+    end
+
+    describe 'installing email' do
+      before do
+        create_file 'theme/views/test.txt'
+      end
+
+      it 'should install email if it is present' do
+        create_file 'theme/mailers/railsthemes_mailer/test.txt'
+        mock(@installer.email_installer).install
+        @installer.install_from_file_system('theme')
+      end
+
+      it 'should not install email if it is not present' do
+        dont_allow(@installer.email_installer).install
+        @installer.install_from_file_system('theme')
       end
     end
   end
@@ -185,5 +203,4 @@ describe Railsthemes::Installer do
       end
     end
   end
-
 end

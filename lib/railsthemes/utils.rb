@@ -2,16 +2,31 @@ module Railsthemes
   class Utils
     extend Railsthemes::Logging
 
-    # remove file only if it exists
     def self.remove_file filepath
-      if File.exists?(filepath)
-        File.delete filepath
+      File.delete filepath if File.exists?(filepath)
+    end
+
+    def self.safe_write filepath, &block
+      create_dir_for(filepath)
+      File.open(filepath, 'w') do |f|
+        yield f
       end
     end
 
-    # copy a file, ensuring that the directory is present
+    def self.safe_read_and_write filepath, &block
+      create_dir_for(filepath)
+      lines = read_file(filepath).split("\n")
+      File.open(filepath, 'w') do |f|
+        yield lines, f
+      end
+    end
+
+    def self.create_dir_for filepath
+      FileUtils.mkdir_p(File.dirname(filepath))
+    end
+
     def self.copy_ensuring_directory_exists src, dest
-      FileUtils.mkdir_p(File.dirname(dest)) # create directory if necessary
+      create_dir_for(dest)
       logger.debug "Copying #{src} to #{dest}"
       FileUtils.cp src, dest
     end
