@@ -138,13 +138,9 @@ There are some help articles for your perusal at http://support.railsthemes.com.
 
 What now?
 EOS
-      with_number("Make sure that you have the jquery-rails gem installed. All of the current",
-                  "themes require this in your Gemfile so we can use jQuery UI.")
       with_number "Start or restart your development server."
       with_number("Check out the local theme samples at:",
-                  "http://localhost:3000/railsthemes/landing",
-                  "http://localhost:3000/railsthemes/inner",
-                  "http://localhost:3000/railsthemes/jquery_ui")
+                  "http://localhost:3000/railsthemes")
       with_number("Ensure your new application layout file contains everything that you wanted",
                   "from the old one.")
       with_number("For instructions on how to send RailsThemes-styled emails in your app,",
