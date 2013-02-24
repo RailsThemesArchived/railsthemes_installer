@@ -16,6 +16,7 @@ require 'railsthemes/installer'
 require 'railsthemes/theme_installer'
 require 'railsthemes/email_installer'
 require 'railsthemes/ensurer'
+require 'railsthemes/os'
 
 module Railsthemes
 end
