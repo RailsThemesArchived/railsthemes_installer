@@ -28,8 +28,6 @@ EOS
     :desc => "Install using local relative pathname instead of a code.", :type => :boolean
   method_option :staging,
     :desc => "Hit the staging server instead of https://railsthemes.com.", :type => :boolean
-  method_option :beta,
-    :desc => "Hit the beta server to install new theme configurations.", :type => :boolean
   method_option :server,
     :desc => "Hit an arbitrary server instead of https://railsthemes.com.", :type => :string
   method_option :no_doc_popup,

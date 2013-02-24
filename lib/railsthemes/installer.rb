@@ -6,9 +6,8 @@ module Railsthemes
       @installed_email = false
       @doc_popup = !options[:no_doc_popup]
       server = 'http://staging.railsthemes.com' if options[:staging]
-      server = 'http://beta.railsthemes.com' if options[:beta]
       server = options[:server] if options[:server]
-      server ||= 'https://railsthemes.com'
+      server ||= 'https://beta.railsthemes.com' # 'https://railsthemes.com' when beta done
       server = nil if options[:file]
       @server = server
     end
@@ -30,11 +29,12 @@ module Railsthemes
     end
 
     def popup_documentation
-      style_guides = Dir['doc/*Usage_And_Style_Guide.html']
-      # need better tests of popping up multiple docs
-      style_guides.each do |style_guide|
-        logger.debug("style_guide: #{style_guide}")
-        Launchy.open(style_guide) if style_guide
+      latest_installed_dir = Dir.glob("doc/railsthemes_*").max_by {|f| File.mtime(f)}
+      if latest_installed_dir
+        Dir[File.join(latest_installed_dir, '*.html')].each do |document|
+          logger.debug("document: #{document}")
+          Launchy.open(document) if document
+        end
       end
     end
 
@@ -51,7 +51,7 @@ module Railsthemes
         Safe.log_and_abort "Could not find the file you need: #{filepath}"
       end
 
-      logger.warn 'Bundling to install gems...'
+      logger.warn 'Bundling to install new gems...'
       Safe.system_call 'bundle'
       logger.warn 'Done bundling.'
 
@@ -65,23 +65,25 @@ module Railsthemes
       logger.warn "Figuring out what to download..."
       send_gemfile code
 
-      dl_hash = get_download_hash code
+      download_url = get_download_url code
 
-      if dl_hash
-        logger.debug "dl_hash: #{dl_hash.inspect}"
+      if download_url
+        logger.debug "download_url: #{download_url}"
         Utils.with_tempdir do |tempdir|
-          download_from_hash dl_hash, tempdir
+          download_from_url download_url, tempdir
           install_from_file_system tempdir
         end
       else
-        Safe.log_and_abort("We didn't recognize the code you gave to download the theme (#{code}). It should look something like your@email.com:ABCDEF.")
+        Safe.log_and_abort "We didn't recognize the code you gave to download the theme (#{code}). " +
+                           "It should look something like your@email.com:ABCDEF."
       end
     end
 
-    def get_download_hash code
+    def get_download_url code
       config = Utils.get_primary_configuration
       server_request_url = "#{@server}/download?code=#{code}&config=#{config * ','}&v=2"
       response = nil
+
       begin
         response = Utils.get_url server_request_url
       rescue SocketError => e
@@ -91,21 +93,16 @@ module Railsthemes
         logger.debug e.backtrace
       end
 
-      if response && response.code.to_s == '200'
-        JSON.parse(response.body)
-      else
-        nil
-      end
+      response.body if response && response.code.to_s == '200'
     end
 
-    def download_from_hash dl_hash, download_to
-      url = dl_hash['theme']
+    def download_from_url url, download_to
       if url
-        logger.warn "Downloading main theme..."
+        logger.warn "Downloading theme..."
         config = Utils.get_primary_configuration
         archive = File.join(download_to, "#{config.join('-')}.tar.gz")
         Utils.download :url => url, :save_to => archive
-        logger.warn "Done downloading main theme."
+        logger.warn "Done downloading theme."
       end
     end
 
@@ -127,9 +124,9 @@ module Railsthemes
 
 Yay! Your theme is installed!
 
-=============================
 
 Documentation and help
+======================
 
 Theme documentation is located in the doc folder.
 
@@ -139,8 +136,7 @@ There are some help articles for your perusal at http://support.railsthemes.com.
 What now?
 EOS
       with_number "Start or restart your development server."
-      with_number("Check out the local theme samples at:",
-                  "http://localhost:3000/railsthemes")
+      with_number("Check out the local theme samples at:  http://localhost:3000/railsthemes")
       with_number("Ensure your new application layout file contains everything that you wanted",
                   "from the old one.")
       with_number("For instructions on how to send RailsThemes-styled emails in your app,",

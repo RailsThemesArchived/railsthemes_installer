@@ -67,7 +67,7 @@ module Railsthemes
     def self.get_url url
       uri = URI.parse url
       http = Net::HTTP.new uri.host, uri.port
-      set_https http if uri.scheme == 'https'
+      set_https(http) if uri.scheme == 'https'
       path = url.gsub(%r{https?://[^/]+}, '')
       http.request_get(path)
     end
