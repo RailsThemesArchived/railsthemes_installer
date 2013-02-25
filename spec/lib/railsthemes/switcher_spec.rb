@@ -29,6 +29,22 @@ describe Railsthemes::Switcher do
   end
 
   describe '#switch_to' do
+    context 'when there are themes installed' do
+      before do
+        mock(@switcher).installed_themes { ['foo', 'bar'] }
+      end
+
+      it 'should use the theme when it is an installed theme' do
+        mock(Railsthemes::Utils).set_layout_in_application_controller('bar')
+        @switcher.switch_to 'bar'
+      end
+
+      it 'should not use the theme when it is not installed' do
+        dont_allow(Railsthemes::Utils).set_layout_in_application_controller(anything)
+        mock(Railsthemes::Logging.logger).warn "'quux' is not a locally installed RailsThemes theme."
+        @switcher.switch_to 'quux'
+      end
+    end
   end
 
   describe '#installed_themes' do

@@ -57,7 +57,7 @@ module Railsthemes
       remove_unwanted_public_files
       create_railsthemes_demo_routes
       add_needed_gems
-      set_layout_in_application_controller theme_name
+      Utils.set_layout_in_application_controller theme_name
       add_to_asset_precompilation_list theme_name
       comment_out_formtastic_if_user_does_not_use_formtastic theme_name
     end
@@ -114,31 +114,6 @@ module Railsthemes
       end
       ['compass-rails', 'zurb-foundation'].each do |gemname|
         Utils.add_gem_to_gemfile(gemname, :group => 'assets') unless installed_gems.include?(gemname)
-      end
-    end
-
-    def set_layout_in_application_controller theme_name
-      ac_lines = Utils.lines('app/controllers/application_controller.rb')
-      count = ac_lines.grep(/^\s*layout 'railsthemes/).count
-      if count == 0 # layout line not found, add it
-        Utils.safe_write('app/controllers/application_controller.rb') do |f|
-          ac_lines.each do |line|
-            f.puts line
-            f.puts "  layout 'railsthemes_#{theme_name}'" if line =~ /^class ApplicationController/
-          end
-        end
-      elsif count == 1 # layout line found, change it if necessary
-        Utils.safe_write('app/controllers/application_controller.rb') do |f|
-          ac_lines.each do |line|
-            if line =~ /^\s*layout 'railsthemes_/
-              f.puts "  layout 'railsthemes_#{theme_name}'"
-            else
-              f.puts line
-            end
-          end
-        end
-      else
-        # multiple layout lines, not sure what to do here
       end
     end
 

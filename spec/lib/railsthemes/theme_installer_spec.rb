@@ -190,7 +190,7 @@ describe Railsthemes::ThemeInstaller do
       mock(@installer).remove_unwanted_public_files
       mock(@installer).create_railsthemes_demo_routes
       mock(@installer).add_needed_gems
-      mock(@installer).set_layout_in_application_controller 'theme_name'
+      mock(Railsthemes::Utils).set_layout_in_application_controller 'theme_name'
       mock(@installer).add_to_asset_precompilation_list 'theme_name'
       mock(@installer).comment_out_formtastic_if_user_does_not_use_formtastic 'theme_name'
       @installer.post_copying_changes 'theme_name'
@@ -328,45 +328,6 @@ end
           '  root :to => "railsthemes#index"'
         ).count.should == 1
       end
-    end
-  end
-
-  describe '#set_layout_in_application_controller' do
-    before do
-      @base = <<-EOS
-class ApplicationController < ActionController::Base
-  protect_from_forgery
-      EOS
-    end
-
-    it 'should add the layout line if it does not exist' do
-      create_file 'app/controllers/application_controller.rb', :content => "#{@base}\nend"
-      @installer.set_layout_in_application_controller('magenta')
-      lines = File.read('app/controllers/application_controller.rb').split("\n")
-      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
-    end
-
-    it 'should modify the layout line if it exists but different' do
-      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
-#{@base}
-  layout 'railsthemes_orange'
-end
-      EOS
-      @installer.set_layout_in_application_controller('magenta')
-      lines = File.read('app/controllers/application_controller.rb').split("\n")
-      lines.grep(/layout 'railsthemes_orange'/).count.should == 0
-      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
-    end
-
-    it 'should not modify the layout line if it exists and same' do
-      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
-#{@base}
-  layout 'railsthemes_orange'
-end
-      EOS
-      @installer.set_layout_in_application_controller('orange')
-      lines = File.read('app/controllers/application_controller.rb').split("\n")
-      lines.grep(/layout 'railsthemes_orange'/).count.should == 1
     end
   end
 

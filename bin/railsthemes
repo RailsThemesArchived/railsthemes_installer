@@ -61,7 +61,11 @@ EOS
     switcher.list
   end
 
-  # AP: other options could include list, remove, help, etc.
+  desc "use", "Use a RailsTheme Theme installed in this app"
+  def use theme
+    switcher = Railsthemes::Switcher.new
+    switcher.switch_to theme
+  end
 end
 
 Installer.start ARGV

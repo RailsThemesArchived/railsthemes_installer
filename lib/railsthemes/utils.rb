@@ -146,5 +146,31 @@ module Railsthemes
         f.puts line
       end
     end
+
+    def self.set_layout_in_application_controller theme_name
+      ac_lines = Utils.lines('app/controllers/application_controller.rb')
+      count = ac_lines.grep(/^\s*layout 'railsthemes/).count
+      if count == 0 # layout line not found, add it
+        Utils.safe_write('app/controllers/application_controller.rb') do |f|
+          ac_lines.each do |line|
+            f.puts line
+            f.puts "  layout 'railsthemes_#{theme_name}'" if line =~ /^class ApplicationController/
+          end
+        end
+      elsif count == 1 # layout line found, change it if necessary
+        Utils.safe_write('app/controllers/application_controller.rb') do |f|
+          ac_lines.each do |line|
+            if line =~ /^\s*layout 'railsthemes_/
+              f.puts "  layout 'railsthemes_#{theme_name}'"
+            else
+              f.puts line
+            end
+          end
+        end
+      else
+        # multiple layout lines, not sure what to do here
+      end
+    end
+
   end
 end
