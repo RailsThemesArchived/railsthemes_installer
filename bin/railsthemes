@@ -57,7 +57,8 @@ EOS
 
   desc "list", "List all themes installed in this app"
   def list
-    Railsthemes::Switcher.new.list
+    switcher = Railsthemes::Switcher.new
+    switcher.list
   end
 
   # AP: other options could include list, remove, help, etc.
