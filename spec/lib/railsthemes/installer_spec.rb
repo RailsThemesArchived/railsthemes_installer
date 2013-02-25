@@ -16,7 +16,7 @@ describe Railsthemes::Installer do
     describe 'server' do
       it 'should default to production' do
         installer = Railsthemes::Installer.new
-        installer.server.should == 'https://beta.railsthemes.com'
+        installer.server.should == 'https://railsthemes-beta.herokuapp.com'
       end
 
       it 'should be right when in staging' do
@@ -137,7 +137,7 @@ describe Railsthemes::Installer do
 
   describe '#download_from_url' do
     it 'should download theme' do
-      mock(Railsthemes::Utils).download(:url => 'theme url', :save_to => "dir/erb-css.tar.gz")
+      mock(Railsthemes::Utils).download(:url => 'theme url', :save_to => "dir/rt-archive.tar.gz")
       @installer.download_from_url('theme url', 'dir')
     end
   end
@@ -150,7 +150,7 @@ describe Railsthemes::Installer do
     it 'should download and install when the code is recognized' do
       mock(@installer).get_download_url('code') { 'url' }
       mock(@installer).download_from_url('url', @tempdir)
-      mock(@installer).install_from_file_system(@tempdir)
+      mock(@installer).install_from_file_system("#{@tempdir}/rt-archive")
       @installer.install_from_code 'code'
     end
 

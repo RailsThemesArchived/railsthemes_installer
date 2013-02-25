@@ -7,7 +7,7 @@ module Railsthemes
       @doc_popup = !options[:no_doc_popup]
       server = 'http://staging.railsthemes.com' if options[:staging]
       server = options[:server] if options[:server]
-      server ||= 'https://beta.railsthemes.com' # 'https://railsthemes.com' when beta done
+      server ||= 'https://railsthemes-beta.herokuapp.com' # 'https://railsthemes.com' when beta done
       server = nil if options[:file]
       @server = server
     end
@@ -71,7 +71,7 @@ module Railsthemes
         logger.debug "download_url: #{download_url}"
         Utils.with_tempdir do |tempdir|
           download_from_url download_url, tempdir
-          install_from_file_system tempdir
+          install_from_file_system File.join(tempdir, 'rt-archive')
         end
       else
         Safe.log_and_abort "We didn't recognize the code you gave to download the theme (#{code}). " +
@@ -100,7 +100,7 @@ module Railsthemes
       if url
         logger.warn "Downloading theme..."
         config = Utils.get_primary_configuration
-        archive = File.join(download_to, "#{config.join('-')}.tar.gz")
+        archive = File.join(download_to, "rt-archive.tar.gz")
         Utils.download :url => url, :save_to => archive
         logger.warn "Done downloading theme."
       end

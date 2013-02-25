@@ -17,17 +17,15 @@ module Railsthemes
       theme_name = nil
       if File.directory?(source_filepath)
         theme_name = install_from_directory source_filepath
+        post_copying_changes(theme_name)
       elsif Utils.archive?(source_filepath + '.tar.gz')
         install_from_archive(source_filepath + '.tar.gz')
       else
         Safe.log_and_abort 'Expected either a directory or archive.'
       end
-
-      post_copying_changes(theme_name)
     end
 
     def copy_theme_portions source_filepath, file_mappings
-      logger.debug 'Copying theme portions...'
       file_mappings.each do |src_dir, dest_prefix|
         Dir["#{source_filepath}/#{src_dir}/**/*"].each do |src|
           dest = src.sub("#{source_filepath}", dest_prefix).sub(/^\//, '')
@@ -36,7 +34,6 @@ module Railsthemes
           end
         end
       end
-      logger.debug 'Done copying theme portions.'
     end
 
     def install_from_directory source_filepath
