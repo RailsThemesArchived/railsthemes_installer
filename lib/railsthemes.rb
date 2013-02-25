@@ -17,6 +17,7 @@ require 'railsthemes/theme_installer'
 require 'railsthemes/email_installer'
 require 'railsthemes/ensurer'
 require 'railsthemes/os'
+require 'railsthemes/switcher'
 
 module Railsthemes
 end

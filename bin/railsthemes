@@ -17,6 +17,7 @@ class Installer < Thor
 Usage:
 railsthemes -v                       # Print the version of the installer gem you are using
 railsthemes install your@email:code  # Install from RailsThemes.com using your download code
+railsthemes list                     # List all themes installed in this app
 railsthemes help [TASK]              # Describe available tasks or one specific task
 EOS
     end
@@ -52,6 +53,11 @@ EOS
       abort 'Please specify a code to install from' unless code
       installer.install_from_code code
     end
+  end
+
+  desc "list", "List all themes installed in this app"
+  def list
+    Railsthemes::Switcher.new.list
   end
 
   # AP: other options could include list, remove, help, etc.
