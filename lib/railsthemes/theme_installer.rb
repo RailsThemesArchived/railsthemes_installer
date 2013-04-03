@@ -75,15 +75,16 @@ module Railsthemes
   ### Begin RailsThemes basic generated routes ###
   # Routes to RailsThemes Theme Example markup:
   unless Rails.env.production?
-    match 'railsthemes', :controller => :railsthemes, :action => :index
-    match 'railsthemes/:action', :controller => :railsthemes
+    get 'railsthemes', controller: :railsthemes, action: :index
+    match 'railsthemes/:action', controller: :railsthemes, via: [:get, :post]
   end
 
   # This is magical routing for errors (instead of using the static markup in
   # public/*.html)
-  match '/403', :to => 'railsthemes_errors#403_forbidden'
-  match '/404', :to => 'railsthemes_errors#404_not_found'
-  match '/500', :to => 'railsthemes_errors#500_internal_server_error'
+  get '/403', to: 'railsthemes_errors#403_forbidden'
+  get '/404', to: 'railsthemes_errors#404_not_found'
+  get '/500', to: 'railsthemes_errors#500_internal_server_error'
+
   ### End RailsThemes basic generated routes ###
       EOS
       output.split("\n")

@@ -313,7 +313,7 @@ end
     it 'should add routing if it has not been generated yet' do
       @installer.create_railsthemes_demo_routes
       File.read('config/routes.rb').split("\n").grep(
-        /match 'railsthemes', :controller => :railsthemes, :action => :index/
+        /get 'railsthemes', controller: :railsthemes, action: :index/
       ).count.should == 1
     end
 
@@ -321,7 +321,7 @@ end
       @installer.create_railsthemes_demo_routes
       @installer.create_railsthemes_demo_routes
       File.read('config/routes.rb').split("\n").grep(
-        /match 'railsthemes', :controller => :railsthemes, :action => :index/
+        /get 'railsthemes', controller: :railsthemes, action: :index/
       ).count.should == 1
     end
 
