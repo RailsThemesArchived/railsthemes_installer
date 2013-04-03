@@ -41,9 +41,6 @@ EOS
   def install code_or_file
     installer = Railsthemes::Installer.new options
 
-    Railsthemes::Logging.verbose if options[:verbose]
-    Railsthemes::Logging.debug if options[:debugging]
-
     if options[:file]
       file = code_or_file
       abort 'Please specify a file to install from' unless file

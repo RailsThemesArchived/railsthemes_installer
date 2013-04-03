@@ -4,12 +4,16 @@ module Railsthemes
 
     def initialize options = {}
       @installed_email = false
+
       @doc_popup = !options[:no_doc_popup]
       server = 'http://staging.railsthemes.com' if options[:staging]
       server = options[:server] if options[:server]
       server ||= 'https://railsthemes-beta.herokuapp.com' # 'https://railsthemes.com' when beta done
       server = nil if options[:file]
       @server = server
+
+      Railsthemes::Logging.verbose if options[:verbose]
+      Railsthemes::Logging.debug if options[:debugging]
     end
 
     attr_accessor :doc_popup, :server
