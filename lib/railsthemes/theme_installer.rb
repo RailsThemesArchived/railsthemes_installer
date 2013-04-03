@@ -47,6 +47,7 @@ module Railsthemes
         ['images', 'app/assets'],
         ['mailers', 'app'],
         ['views', 'app'],
+        ['fonts', 'app/assets'],
       ]
 
       logger.warn 'Done installing.'

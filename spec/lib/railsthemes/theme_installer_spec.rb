@@ -84,6 +84,12 @@ describe Railsthemes::ThemeInstaller do
           @installer.install_from_file_system('theme')
           filesystem_should_match ['app/views/railsthemes_themename/view1.html.erb']
         end
+
+        it 'should copy fonts' do
+          create_file 'theme/fonts/railsthemes_themename/myfont.ttf'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/assets/fonts/railsthemes_themename/myfont.ttf']
+        end
       end
 
       it 'should handle directories that have spaces' do
