@@ -286,6 +286,14 @@ describe Railsthemes::ThemeInstaller do
           lines.grep(/gem 'zurb-foundation'/).count.should == 1
         end
       end
+
+      it 'should specify the right version of zurb-foundation' do
+        write_gemfiles_using_gems :assets => ['compass-rails']
+        @installer.add_needed_gems
+        lines = File.read('Gemfile').split("\n")
+        matches = lines.grep(/gem 'zurb-foundation'/)
+        matches.first.should =~ /'~> 4\.0'/
+      end
     end
   end
 

@@ -113,8 +113,13 @@ module Railsthemes
       ['sass', 'jquery-rails', 'jquery-ui-rails'].each do |gemname|
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
       end
-      ['compass-rails', 'zurb-foundation'].each do |gemname|
-        Utils.add_gem_to_gemfile(gemname, :group => 'assets') unless installed_gems.include?(gemname)
+
+      unless installed_gems.include?('compass-rails')
+        Utils.add_gem_to_gemfile('compass-rails', :group => 'assets')
+      end
+
+      unless installed_gems.include?('zurb-foundation')
+        Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0', :group => 'assets')
       end
     end
 

@@ -141,6 +141,7 @@ module Railsthemes
     def self.add_gem_to_gemfile gem_name, attributes = {}
       File.open('Gemfile', 'a') do |f|
         line = "gem '#{gem_name}'"
+        line += ", '#{attributes[:version]}'" if attributes[:version]
         line += ", :group => '#{attributes[:group]}'" if attributes[:group]
         line += " # RailsThemes"
         f.puts line
