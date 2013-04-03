@@ -16,7 +16,7 @@ describe Railsthemes::Installer do
     describe 'server' do
       it 'should default to production' do
         installer = Railsthemes::Installer.new
-        installer.server.should == 'https://railsthemes-beta.herokuapp.com'
+        installer.server.should == 'https://railsthemes.com'
       end
 
       it 'should be right when in staging' do

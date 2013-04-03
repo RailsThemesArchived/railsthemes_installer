@@ -8,7 +8,7 @@ module Railsthemes
       @doc_popup = !options[:no_doc_popup]
       server = 'http://staging.railsthemes.com' if options[:staging]
       server = options[:server] if options[:server]
-      server ||= 'https://railsthemes-beta.herokuapp.com' # 'https://railsthemes.com' when beta done
+      server ||= 'https://railsthemes.com'
       server = nil if options[:file]
       @server = server
 
@@ -97,7 +97,13 @@ module Railsthemes
         logger.debug e.backtrace
       end
 
-      response.body if response && response.code.to_s == '200'
+      if response
+        if response.code.to_s == '200'
+          response.body
+        else
+          logger.debug "download_url response code: #{response(:code)}"
+        end
+      end
     end
 
     def download_from_url url, download_to
