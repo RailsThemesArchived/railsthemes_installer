@@ -13,9 +13,9 @@ describe Railsthemes::ThemeInstaller do
   end
 
   describe :install_from_archive do
-    # does not work on Windows, NotImplementedError in tar module
+    # this spec does not work on Windows, NotImplementedError in tar module
     it 'should extract and then install from that extracted directory' do
-      filename = 'spec/fixtures/blank-assets-archived/erb-css.tar.gz'
+      filename = 'spec/fixtures/blank-assets-archived/tier1-erb-scss.tar.gz'
       FakeFS::FileSystem.clone(filename)
       mock(@installer).install_from_file_system @tempdir
       @installer.install_from_archive filename
@@ -24,75 +24,116 @@ describe Railsthemes::ThemeInstaller do
 
   describe :install_from_file_system do
     context 'when the filepath is a directory' do
-      it 'should copy the files from that directory into the Rails app' do
-        FileUtils.mkdir_p('filepath/base')
-        FileUtils.touch('filepath/base/a')
-        FileUtils.touch('filepath/base/b')
-        mock(@installer).post_copying_changes
+      context 'copying files' do
+        it 'should copy controllers (and subdirectories, generally)' do
+          create_file 'theme/controllers/controller1.rb'
+          create_file 'theme/controllers/railsthemes_themename/controller2.rb'
 
-        @installer.install_from_file_system('filepath')
-        File.should exist('a')
-        File.should exist('b')
+          @installer.install_from_file_system('theme')
+
+          filesystem_should_match [
+            'app/controllers/controller1.rb',
+            'app/controllers/railsthemes_themename/controller2.rb',
+          ]
+        end
+
+        it 'should copy helpers' do
+          create_file 'theme/helpers/helper1.rb'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/helpers/helper1.rb']
+        end
+
+        it 'should copy layouts' do
+          create_file 'theme/layouts/layout1.html.haml'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/views/layouts/layout1.html.haml']
+        end
+
+        it 'should copy stylesheets' do
+          create_file 'theme/stylesheets/stylesheet1.css.scss'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/assets/stylesheets/stylesheet1.css.scss']
+        end
+
+        it 'should copy javascripts' do
+          create_file 'theme/javascripts/file1.js'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/assets/javascripts/file1.js']
+        end
+
+        it 'should copy docs' do
+          create_file 'theme/doc/some_doc.md'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['doc/some_doc.md']
+        end
+
+        it 'should copy images' do
+          create_file 'theme/images/image1.jpg'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/assets/images/image1.jpg']
+        end
+
+        it 'should copy mailers' do
+          create_file 'theme/mailers/mailer.rb'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/mailers/mailer.rb']
+        end
+
+        it 'should copy views' do
+          create_file 'theme/views/railsthemes_themename/view1.html.erb'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/views/railsthemes_themename/view1.html.erb']
+        end
+
+        it 'should copy fonts' do
+          create_file 'theme/fonts/railsthemes_themename/myfont.ttf'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['app/assets/fonts/railsthemes_themename/myfont.ttf']
+        end
       end
 
       it 'should handle directories that have spaces' do
-        FileUtils.mkdir_p('file path/base')
-        FileUtils.touch('file path/base/a')
-        FileUtils.touch('file path/base/b')
-        mock(@installer).post_copying_changes
-
-        @installer.install_from_file_system('file path')
-        File.should exist('a')
-        File.should exist('b')
+        create_file 'theme/images/image with spaces.png'
+        @installer.install_from_file_system('theme')
+        filesystem_should_match ['app/assets/images/image with spaces.png']
       end
 
       it 'should handle windows style paths' do
-        FileUtils.mkdir_p('fp1/fp2/base')
-        FileUtils.touch('fp1/fp2/base/a')
-        FileUtils.touch('fp1/fp2/base/b')
-        FileUtils.mkdir_p('fp1/fp2/gems')
-        mock(@installer).post_copying_changes
-
-        @installer.install_from_file_system('fp1\fp2')
-        File.should exist('a')
-        File.should exist('b')
+        create_file 'subdir/theme/images/image.png'
+        @installer.install_from_file_system('subdir\theme')
+        filesystem_should_match ['app/assets/images/image.png']
       end
 
       it 'should not copy system files' do
-        FileUtils.mkdir_p('filepath/base')
-        FileUtils.touch('filepath/base/.DS_Store')
-        mock(@installer).post_copying_changes
+        create_file 'theme/controllers/.DS_Store'
+        @installer.install_from_file_system('theme')
+        File.should_not exist('app/controllers/.DS_Store')
+      end
 
-        @installer.install_from_file_system('filepath')
-        File.should_not exist('.DS_Store')
+      it 'should do the post copying changes needed' do
+        create_file 'theme/theme_name', :content => 'themename'
+        mock(@installer).post_copying_changes('themename')
+        @installer.install_from_file_system('theme')
       end
     end
 
     describe 'override file behavior' do
       before do
-        FileUtils.mkdir_p('filepath/gems')
-        FileUtils.mkdir_p('filepath/base/app/assets/stylesheets')
-        FileUtils.mkdir_p("app/assets/stylesheets")
+        create_file 'theme/stylesheets/overrides.css.scss', :content => 'the override'
         @filename = 'app/assets/stylesheets/overrides.css.scss'
-        FileUtils.touch("filepath/base/#{@filename}")
-        mock(@installer).post_copying_changes
-        stub(@installer).popup_documentation
       end
 
       it 'should not overwrite override files when they already exist' do
-        File.open(@filename, 'w') do |f|
-          f.write "existing override"
-        end
-
-        @installer.install_from_file_system('filepath')
+        create_file @filename, :content => 'do not replace'
+        @installer.install_from_file_system('theme')
         File.should exist(@filename)
-        File.read(@filename).should =~ /existing override/
+        File.read(@filename).should =~ /do not replace/
       end
 
       it 'should create override files when they do not already exist' do
-        @installer.install_from_file_system('filepath')
+        @installer.install_from_file_system('theme')
         File.should exist(@filename)
-        File.read(@filename).should == ''
+        File.read(@filename).should == 'the override'
       end
     end
 
@@ -113,93 +154,266 @@ describe Railsthemes::ThemeInstaller do
     end
   end
 
-  describe '#create_railsthemes_demo_pages' do
+  # this should arguably be an integration test, but I'm not sure how
+  # fakefs + running arbitrary binaries will work out
+  describe 'end to end behavior' do
     before do
-      FileUtils.mkdir('config')
-      File.open(File.join('config', 'routes.rb'), 'w') do |f|
-        f.write <<-EOS
+      stub(@installer).post_copying_changes
+      FakeFS::FileSystem.clone('spec/fixtures')
+    end
+
+    def verify_end_to_end_operation
+      [
+       'app/controllers/controller1.rb',
+       'doc/some_doc.md',
+       'app/helpers/helper1.rb',
+       'app/assets/images/image1.jpg',
+       'app/assets/javascripts/file1.js',
+       'app/views/layouts/layout1.html.haml',
+       'app/mailers/mailer.rb',
+       'app/assets/stylesheets/stylesheet1.css.scss',
+      ].each do |filename|
+        File.should exist(filename), "#{filename} was expected but not present"
+      end
+    end
+
+    it 'should extract correctly from directory' do
+      filename = 'spec/fixtures/blank-assets/tier1-erb-scss'
+      @installer.install_from_file_system filename
+      verify_end_to_end_operation
+    end
+
+    # this spec does not work on Windows, NotImplementedError in tar module
+    it 'should extract correctly from archive' do
+      filename = 'spec/fixtures/blank-assets-archived/tier1-erb-scss'
+      @installer.install_from_file_system filename
+      verify_end_to_end_operation
+    end
+  end
+
+  describe '#post_copying_changes' do
+    it 'should call the right submethods' do
+      mock(@installer).remove_unwanted_public_files
+      mock(@installer).create_railsthemes_demo_routes
+      mock(@installer).add_needed_gems
+      mock(Railsthemes::Utils).set_layout_in_application_controller 'theme_name'
+      mock(@installer).add_to_asset_precompilation_list 'theme_name'
+      mock(@installer).comment_out_formtastic_if_user_does_not_use_formtastic 'theme_name'
+      @installer.post_copying_changes 'theme_name'
+    end
+  end
+
+  describe '#remove_unwanted_public_files' do
+    it 'should remove files we do not want hanging around' do
+      files = [
+        'public/index.html',
+        'public/404.html',
+        'public/422.html',
+        'public/500.html',
+      ]
+      files.each do |filename|
+        create_file filename
+      end
+
+      @installer.remove_unwanted_public_files
+
+      files.each do |filename|
+        File.should_not exist(filename), "#{filename} was expected to be gone, but it is still here"
+      end
+    end
+  end
+
+  describe '#add_needed_gems' do
+    describe 'general gems' do
+      context 'are not present' do
+        it 'should require them' do
+          create_file 'Gemfile'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/^gem 'sass'/).count.should == 1
+          lines.grep(/^gem 'jquery-rails'/).count.should == 1
+          lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+        end
+      end
+
+      context 'are present' do
+        it 'should not readd them' do
+          write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/^gem 'sass'/).count.should == 1
+          lines.grep(/^gem 'jquery-rails'/).count.should == 1
+          lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+        end
+      end
+    end
+
+    describe 'asset gems' do
+      context 'gems are not present' do
+        it 'should add them' do
+          create_file 'Gemfile'
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
+
+      context 'gems are present' do
+        it 'should not add them' do
+          write_gemfiles_using_gems :assets => ['compass-rails', 'zurb-foundation']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
+
+      context 'only one is present' do
+        it 'should add compass-rails if not present' do
+          write_gemfiles_using_gems :assets => ['zurb-foundation']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+
+        it 'should add zurb-foundation if not present' do
+          write_gemfiles_using_gems :assets => ['compass-rails']
+          @installer.add_needed_gems
+          lines = File.read('Gemfile').split("\n")
+          lines.grep(/gem 'compass-rails'/).count.should == 1
+          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+        end
+      end
+
+      it 'should specify the right version of zurb-foundation' do
+        write_gemfiles_using_gems :assets => ['compass-rails']
+        @installer.add_needed_gems
+        lines = File.read('Gemfile').split("\n")
+        matches = lines.grep(/gem 'zurb-foundation'/)
+        matches.first.should =~ /'~> 4\.0'/
+      end
+    end
+  end
+
+  describe '#create_railsthemes_demo_routes' do
+    before do
+      contents = <<-EOS
 RailsApp::Application.routes.draw do
   # This is a legacy wild controller route that's not recommended for RESTful applications.
   # Note: This route will make all actions in every controller accessible via GET requests.
   # match ':controller(/:action(/:id(.:format)))'
+  # root :to => 'home/index'
 end
-        EOS
+      EOS
+      create_file 'config/routes.rb', :content => contents
+    end
+
+    it 'should add routing if it has not been generated yet' do
+      @installer.create_railsthemes_demo_routes
+      File.read('config/routes.rb').split("\n").grep(
+        /get 'railsthemes', controller: :railsthemes, action: :index/
+      ).count.should == 1
+    end
+
+    it 'should not readd routing' do
+      @installer.create_railsthemes_demo_routes
+      @installer.create_railsthemes_demo_routes
+      File.read('config/routes.rb').split("\n").grep(
+        /get 'railsthemes', controller: :railsthemes, action: :index/
+      ).count.should == 1
+    end
+
+    context 'when no root route exists' do
+      it 'should add root route' do
+        @installer.create_railsthemes_demo_routes
+        File.read('config/routes.rb').split("\n").grep(
+          '  root :to => "railsthemes#index"'
+        ).count.should == 1
       end
     end
 
-    it 'should create a RailsThemes controller' do
-      @installer.create_railsthemes_demo_pages
-      controller = File.join('app', 'controllers', 'railsthemes_controller.rb')
-      lines = File.read(controller).split("\n")
-      lines.count.should == 11
-      lines.first.should match /class RailsthemesController < ApplicationController/
-    end
-
-    it 'should insert lines into the routes file' do
-      @installer.create_railsthemes_demo_pages
-      routes_file = File.join('config', 'routes.rb')
-      lines = File.read(routes_file).split("\n")
-      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
-      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
-      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
-    end
-
-    it 'should not insert lines into the routes file when run more than once' do
-      @installer.create_railsthemes_demo_pages
-      @installer.create_railsthemes_demo_pages
-      routes_file = File.join('config', 'routes.rb')
-      lines = File.read(routes_file).split("\n")
-      lines.grep(/match 'railsthemes\/landing' => 'railsthemes#landing'/).count.should == 1
-      lines.grep(/match 'railsthemes\/inner' => 'railsthemes#inner'/).count.should == 1
-      lines.grep(/match 'railsthemes\/jquery_ui' => 'railsthemes#jquery_ui'/).count.should == 1
+    context 'when root route exists' do
+      it 'should not add another root route' do
+        @installer.create_railsthemes_demo_routes
+        @installer.create_railsthemes_demo_routes
+        File.read('config/routes.rb').split("\n").grep(
+          '  root :to => "railsthemes#index"'
+        ).count.should == 1
+      end
     end
   end
 
-  describe :install_gems_from do
-    it 'should install the gems that we specify that match' do
-      FakeFS::FileSystem.clone('spec/fixtures/blank-assets')
-      # we only know about formtastic and simple_form in the gems directory
-      @installer.install_gems_from("spec/fixtures/blank-assets/erb-css", ['formtastic', 'kaminari'])
-      File.should exist('app/assets/stylesheets/formtastic.css.scss')
-      File.should_not exist('app/assets/stylesheets/kaminari.css.scss')
-      File.should_not exist('app/assets/stylesheets/simple_form.css.scss')
+  describe '#add_to_asset_precompilation_list' do
+    it 'should add it to the list if the line is not there yet' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+    end
+
+    it 'should not add it again if the line is there already' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  config.assets.precompile += %w( railsthemes_magenta.js railsthemes_magenta.css )
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+    end
+
+    it 'should add it to the list if there is a different theme already installed' do
+      create_file 'config/environments/production.rb', :content => <<-EOS
+BaseApp::Application.configure do
+  # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+  config.assets.precompile += %w( railsthemes_orange.js railsthemes_orange.css )
+  # config.assets.precompile += %w( search.js )
+end
+      EOS
+      @installer.add_to_asset_precompilation_list 'magenta'
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
     end
   end
 
-  describe 'end to end operation' do
-    def verify_end_to_end_operation
-      ['app/assets/images/image1.png',
-       'app/assets/images/bg/sprite.png',
-       'app/assets/javascripts/jquery.dataTables.js',
-       'app/assets/javascripts/scripts.js.erb',
-       'app/assets/stylesheets/style.css.erb',
-       'app/views/layouts/_interior_sidebar.html.erb',
-       'app/views/layouts/application.html.erb',
-       'app/views/layouts/homepage.html.erb'].each do |filename|
-         File.should exist(filename), "#{filename} was not present"
-      end
-      File.open('app/assets/stylesheets/style.css.erb').each do |line|
-        line.should match /style.css.erb/
-      end
-    end
-
+  describe '#comment_out_formtastic_if_user_does_not_use_formtastic' do
     before do
-      stub(@installer).post_copying_changes
-      FakeFS::FileSystem.clone('spec/fixtures')
-      # should add some gems to the gemfile here and test gem installation
+      @filename = 'app/assets/stylesheets/railsthemes_themename.css'
+      create_file @filename, :content => <<-EOS
+/*
+ *= require formtastic
+ */
+      EOS
     end
 
-    it 'should extract correctly from directory' do
-      filename = 'spec/fixtures/blank-assets/erb-css'
-      @installer.install_from_file_system filename
-      verify_end_to_end_operation
+    context 'user is using formtastic' do
+      before do
+      end
+
+      it 'should not comment out the line' do
+        write_gemfiles_using_gems 'formtastic'
+        @installer.comment_out_formtastic_if_user_does_not_use_formtastic 'themename'
+        File.read(@filename).split("\n").grep(/\*= require formtastic/).count.should == 1
+      end
     end
 
-    # does not work on Windows, NotImplementedError in tar module
-    it 'should extract correctly from archive' do
-      filename = 'spec/fixtures/blank-assets-archived/erb-css'
-      @installer.install_from_file_system filename
-      verify_end_to_end_operation
+    context 'user is not using formtastic' do
+      it 'should comment out the line' do
+        @installer.comment_out_formtastic_if_user_does_not_use_formtastic 'themename'
+        File.read(@filename).split("\n").grep(/\* require formtastic/).count.should == 1
+      end
     end
   end
 

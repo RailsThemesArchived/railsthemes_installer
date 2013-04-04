@@ -13,8 +13,8 @@ describe Railsthemes::Ensurer do
       mock(Railsthemes::Ensurer).ensure_railsthemes_is_not_in_gemfile.times(1)
       mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(1)
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(1)
-      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(1)
-      2.times { Railsthemes::Ensurer.ensure_clean_install_possible }
+      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date('server').times(1)
+      2.times { Railsthemes::Ensurer.ensure_clean_install_possible :server => 'server' }
     end
 
     it 'should do twice if force passed' do
@@ -23,8 +23,8 @@ describe Railsthemes::Ensurer do
       mock(Railsthemes::Ensurer).ensure_railsthemes_is_not_in_gemfile.times(2)
       mock(Railsthemes::Ensurer).ensure_vcs_is_clean.times(2)
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid.times(2)
-      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date.times(2)
-      2.times { Railsthemes::Ensurer.ensure_clean_install_possible :force => true }
+      mock(Railsthemes::Ensurer).ensure_installer_is_up_to_date('server').times(2)
+      2.times { Railsthemes::Ensurer.ensure_clean_install_possible :server => 'server', :force => true }
     end
 
     it 'should not check installer version if we do not want to hit the server' do
@@ -34,7 +34,7 @@ describe Railsthemes::Ensurer do
       mock(Railsthemes::Ensurer).ensure_vcs_is_clean
       mock(Railsthemes::Ensurer).ensure_rails_version_is_valid
       dont_allow(Railsthemes::Ensurer).ensure_installer_is_up_to_date
-      Railsthemes::Ensurer.ensure_clean_install_possible :hit_server => false, :force => true
+      Railsthemes::Ensurer.ensure_clean_install_possible :server => false, :force => true
     end
   end
 
@@ -61,7 +61,7 @@ describe Railsthemes::Ensurer do
         message.should match(/Recommended version: 1\.0\.4/)
       end
       with_installer_version '1.0.3' do
-        Railsthemes::Ensurer.ensure_installer_is_up_to_date
+        Railsthemes::Ensurer.ensure_installer_is_up_to_date('http://example.com')
       end
     end
 
@@ -69,7 +69,7 @@ describe Railsthemes::Ensurer do
       FakeWeb.register_uri :get, /\/installer\/version$/, :body => '1.0.4'
       dont_allow(Railsthemes::Safe).log_and_abort(anything)
       with_installer_version '1.0.4' do
-        Railsthemes::Ensurer.ensure_installer_is_up_to_date
+        Railsthemes::Ensurer.ensure_installer_is_up_to_date('http://example.com')
       end
     end
 
@@ -77,7 +77,7 @@ describe Railsthemes::Ensurer do
       FakeWeb.register_uri :get, /\/installer\/version$/, :body => '1.0.4'
       dont_allow(Railsthemes::Safe).log_and_abort(anything)
       with_installer_version '1.0.5' do
-        Railsthemes::Ensurer.ensure_installer_is_up_to_date
+        Railsthemes::Ensurer.ensure_installer_is_up_to_date('http://example.com')
       end
     end
 
@@ -85,7 +85,7 @@ describe Railsthemes::Ensurer do
       FakeWeb.register_uri :get, /\/installer\/version$/,
         :body => '', :status => ['401', 'Unauthorized']
       mock(Railsthemes::Safe).log_and_abort(/issue checking your installer version/)
-      Railsthemes::Ensurer.ensure_installer_is_up_to_date
+      Railsthemes::Ensurer.ensure_installer_is_up_to_date('http://example.com')
     end
   end
 

@@ -53,11 +53,11 @@ describe Railsthemes::Utils do
   describe 'add_gem_to_gemfile' do
     it 'should add the gem to the Gemfile' do
       Railsthemes::Utils.add_gem_to_gemfile 'test'
-      Railsthemes::Utils.add_gem_to_gemfile 'test'
+      Railsthemes::Utils.add_gem_to_gemfile 'test2'
       lines = File.open('Gemfile').readlines.map(&:strip)
       lines.count.should == 2
-      lines[0].should == "gem 'test'"
-      lines[1].should == "gem 'test'"
+      lines[0].should =~ /^gem 'test'/
+      lines[1].should =~ /^gem 'test2'/
     end
   end
 
@@ -70,4 +70,44 @@ describe Railsthemes::Utils do
       Railsthemes::Utils.download(:url => 'http://example.com/something', :save_to => 'whatever')
     end
   end
+
+  describe '.set_layout_in_application_controller' do
+    before do
+      @base = <<-EOS
+class ApplicationController < ActionController::Base
+  protect_from_forgery
+      EOS
+    end
+
+    it 'should add the layout line if it does not exist' do
+      create_file 'app/controllers/application_controller.rb', :content => "#{@base}\nend"
+      Railsthemes::Utils.set_layout_in_application_controller('magenta')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
+    end
+
+    it 'should modify the layout line if it exists but different' do
+      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
+#{@base}
+  layout 'railsthemes_orange'
+end
+      EOS
+      Railsthemes::Utils.set_layout_in_application_controller('magenta')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_orange'/).count.should == 0
+      lines.grep(/layout 'railsthemes_magenta'/).count.should == 1
+    end
+
+    it 'should not modify the layout line if it exists and same' do
+      create_file 'app/controllers/application_controller.rb', :content => <<-EOS
+#{@base}
+  layout 'railsthemes_orange'
+end
+      EOS
+      Railsthemes::Utils.set_layout_in_application_controller('orange')
+      lines = File.read('app/controllers/application_controller.rb').split("\n")
+      lines.grep(/layout 'railsthemes_orange'/).count.should == 1
+    end
+  end
+
 end

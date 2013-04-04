@@ -33,7 +33,7 @@ module Railsthemes
     end
 
     # gzips the underlying string in the given StringIO,
-    # returning a new StringIO representing the 
+    # returning a new StringIO representing the
     # compressed file.
     def self.gzip(tarfile)
       gz = StringIO.new("")
@@ -49,10 +49,9 @@ module Railsthemes
     # un-gzips the given IO, returning the
     # decompressed version as a StringIO
     def self.ungzip(tarfile)
-      z = Zlib::GzipReader.new(tarfile)
-      unzipped = StringIO.new(z.read)
-      z.close
-      unzipped
+      Zlib::GzipReader.open(tarfile) do |f|
+        StringIO.new(f.read)
+      end
     end
 
     # untars the given IO into the specified

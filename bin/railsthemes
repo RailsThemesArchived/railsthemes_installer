@@ -17,6 +17,7 @@ class Installer < Thor
 Usage:
 railsthemes -v                       # Print the version of the installer gem you are using
 railsthemes install your@email:code  # Install from RailsThemes.com using your download code
+railsthemes list                     # List all themes installed in this app
 railsthemes help [TASK]              # Describe available tasks or one specific task
 EOS
     end
@@ -25,36 +26,20 @@ EOS
 
   desc "install your@email:code", "Install from RailsThemes.com using your download code"
   method_option :file,
-    :desc => "Use local relative pathname instead of a code, and install from there.",
-    :type => :boolean
+    :desc => "Install using local relative pathname instead of a code.", :type => :boolean
   method_option :staging,
-    :desc => "Hit the staging server instead of https://railsthemes.com.",
-    :type => :boolean
+    :desc => "Hit the staging server instead of https://railsthemes.com.", :type => :boolean
   method_option :server,
-    :desc => "Hit an arbitrary server instead of https://railsthemes.com.",
-    :type => :string
+    :desc => "Hit an arbitrary server instead of https://railsthemes.com.", :type => :string
   method_option :no_doc_popup,
-    :desc => "Do not pop up documentation on successful install.",
-    :type => :boolean
+    :desc => "Do not pop up documentation on successful install.", :type => :boolean
   method_option :verbose,
-    :desc => "Print more output on installation.",
-    :type => :boolean
+    :desc => "Print more output on installation.", :type => :boolean
   # do not rename to :debug, conflicts with Thor built-in functionality
   method_option :debugging,
-    :desc => "Print gratuitous output on installation (for debugging).",
-    :type => :boolean
+    :desc => "Print gratuitous output on installation (for debugging).", :type => :boolean
   def install code_or_file
-    # might be better to pass in the options directly if we get more options
-    installer = Railsthemes::Installer.new
-
-    if options[:email]
-    end
-
-    installer.doc_popup = !options[:no_doc_popup]
-    Railsthemes::Logging.verbose if options[:verbose]
-    Railsthemes::Logging.debug if options[:debugging]
-    Railsthemes.server = 'http://staging.railsthemes.com' if options[:staging]
-    Railsthemes.server = options[:server] if options[:server]
+    installer = Railsthemes::Installer.new options
 
     if options[:file]
       file = code_or_file
@@ -67,7 +52,17 @@ EOS
     end
   end
 
-  # AP: other options could include list, remove, help, etc.
+  desc "list", "List all themes installed in this app"
+  def list
+    switcher = Railsthemes::Switcher.new
+    switcher.list
+  end
+
+  desc "use", "Use a RailsTheme Theme installed in this app"
+  def use theme
+    switcher = Railsthemes::Switcher.new
+    switcher.switch_to theme
+  end
 end
 
 Installer.start ARGV

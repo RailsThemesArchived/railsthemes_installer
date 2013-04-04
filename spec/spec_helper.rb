@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'logger'
 require 'fakefs/spec_helpers'
 require 'fakeweb'
+require 'rr'
 
 LOGFILE_NAME = 'railsthemes.log'
 
@@ -26,6 +27,40 @@ RSpec.configure do |config|
 end
 
 FakeWeb.allow_net_connect = false
+
+def write_gemfiles_using_gems *gems
+  File.open('Gemfile', 'a') do |f|
+    f.puts "source :rubygems"
+    gems.each do |gem|
+      if gem.is_a? Hash
+        gem.each do |group, inner_gems|
+          f.puts "group :#{group.to_s} do"
+          inner_gems.each do |gemname|
+            f.puts "  gem '#{gemname}'"
+          end
+          f.puts "end\n"
+        end
+      else
+        f.puts "gem '#{gem.to_s}'"
+      end
+    end
+  end
+
+  gem_names = *gems.map do |gem|
+    if gem.is_a? Hash
+      gems = []
+      gem.each do |group, inner_gems|
+        gems += inner_gems
+      end
+      gems
+    else
+      gem
+    end
+  end.flatten
+  File.open('Gemfile.lock', 'w') do |f|
+    f.write using_gems(*gem_names)
+  end
+end
 
 def using_gems *gems
   "GEM\nremote: https://rubygems.org/\nspecs:\n" +
@@ -68,4 +103,18 @@ def with_installer_version version, &block
 
   Railsthemes.send(:remove_const, 'VERSION')
   Railsthemes.const_set('VERSION', old_version)
+end
+
+def create_file filename, opts = {}
+  FileUtils.mkdir_p(File.dirname(filename))
+  FileUtils.touch(filename)
+  File.open(filename, 'w') { |f| f.write opts[:content] } if opts[:content]
+end
+
+def filesystem
+  Dir["**/*"]
+end
+
+def filesystem_should_match files_to_match
+  (filesystem & files_to_match).should =~ files_to_match
 end

@@ -15,16 +15,9 @@ require 'railsthemes/tar'
 require 'railsthemes/installer'
 require 'railsthemes/theme_installer'
 require 'railsthemes/email_installer'
-require 'railsthemes/asset_installer'
 require 'railsthemes/ensurer'
+require 'railsthemes/os'
+require 'railsthemes/switcher'
 
 module Railsthemes
-  def self.server
-    @server ||= 'https://railsthemes.com'
-  end
-
-  def self.server= server
-    Logging.logger.warn "Using server: #{server}"
-    @server = server
-  end
 end

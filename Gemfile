@@ -8,7 +8,7 @@ end
 
 group :test do
   gem 'aruba', :github => 'cucumber/aruba'
-  gem 'fakefs', :require => 'fakefs/safe', :git => 'https://github.com/RailsThemes/fakefs.git'
+  gem 'fakefs', :require => 'fakefs/safe', :git => 'https://github.com/defunkt/fakefs.git'
   gem 'fakeweb'
   gem 'rr'
   gem 'rspec'
