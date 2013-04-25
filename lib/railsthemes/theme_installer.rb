@@ -2,27 +2,16 @@ module Railsthemes
   class ThemeInstaller
     include Railsthemes::Logging
 
-    def install_from_archive filepath
-      Railsthemes::Utils.with_tempdir do |tempdir|
-        Utils.unarchive filepath, tempdir
-        install_from_file_system tempdir
-      end
-    end
-
-    def install_from_file_system original_source_filepath
-      source_filepath = original_source_filepath.gsub(/\\/, '/')
+    def install_from_file_system source_filepath
       logger.warn 'Installing main theme...'
       logger.info "Source filepath: #{source_filepath}"
 
-      theme_name = nil
-      if File.directory?(source_filepath)
-        theme_name = install_from_directory source_filepath
-        post_copying_changes(theme_name)
-      elsif Utils.archive?(source_filepath + '.tar.gz')
-        install_from_archive(source_filepath + '.tar.gz')
-      else
-        Safe.log_and_abort 'Expected either a directory or archive.'
+      unless File.directory?(source_filepath)
+        Safe.log_and_abort 'Expected a directory to install theme from, but found none.'
       end
+
+      theme_name = install_from_directory source_filepath
+      post_copying_changes(theme_name)
     end
 
     def copy_theme_portions source_filepath, file_mappings

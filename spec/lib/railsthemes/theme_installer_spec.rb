@@ -12,16 +12,6 @@ describe Railsthemes::ThemeInstaller do
     FileUtils.touch('Gemfile.lock')
   end
 
-  describe :install_from_archive do
-    # this spec does not work on Windows, NotImplementedError in tar module
-    it 'should extract and then install from that extracted directory' do
-      filename = 'spec/fixtures/blank-assets-archived/tier1-erb-scss.tar.gz'
-      FakeFS::FileSystem.clone(filename)
-      mock(@installer).install_from_file_system @tempdir
-      @installer.install_from_archive filename
-    end
-  end
-
   describe :install_from_file_system do
     context 'when the filepath is a directory' do
       context 'copying files' do
@@ -96,12 +86,6 @@ describe Railsthemes::ThemeInstaller do
         create_file 'theme/images/image with spaces.png'
         @installer.install_from_file_system('theme')
         filesystem_should_match ['app/assets/images/image with spaces.png']
-      end
-
-      it 'should handle windows style paths' do
-        create_file 'subdir/theme/images/image.png'
-        @installer.install_from_file_system('subdir\theme')
-        filesystem_should_match ['app/assets/images/image.png']
       end
 
       it 'should not copy system files' do
@@ -181,57 +165,11 @@ describe Railsthemes::ThemeInstaller do
       end
     end
 
-    context 'when the filepath is an archive file' do
-      it 'should extract the archive file to a temp directory if the archive exists' do
-        archive = 'tarfile.tar.gz'
-        FileUtils.touch archive
-        mock(@installer).install_from_archive archive
-        @installer.install_from_file_system 'tarfile'
-      end
-    end
-
     context 'otherwise' do
       it 'should report an error reading the file' do
-        mock(Railsthemes::Safe).log_and_abort(/either/)
+        mock(Railsthemes::Safe).log_and_abort(/Expected a directory/)
         @installer.install_from_file_system("does not exist")
       end
-    end
-  end
-
-  # this should arguably be an integration test, but I'm not sure how
-  # fakefs + running arbitrary binaries will work out
-  describe 'end to end behavior' do
-    before do
-      stub(@installer).post_copying_changes
-      FakeFS::FileSystem.clone('spec/fixtures')
-    end
-
-    def verify_end_to_end_operation
-      [
-       'app/controllers/controller1.rb',
-       'doc/some_doc.md',
-       'app/helpers/helper1.rb',
-       'app/assets/images/image1.jpg',
-       'app/assets/javascripts/file1.js',
-       'app/views/layouts/layout1.html.haml',
-       'app/mailers/mailer.rb',
-       'app/assets/stylesheets/stylesheet1.css.scss',
-      ].each do |filename|
-        File.should exist(filename), "#{filename} was expected but not present"
-      end
-    end
-
-    it 'should extract correctly from directory' do
-      filename = 'spec/fixtures/blank-assets/tier1-erb-scss'
-      @installer.install_from_file_system filename
-      verify_end_to_end_operation
-    end
-
-    # this spec does not work on Windows, NotImplementedError in tar module
-    it 'should extract correctly from archive' do
-      filename = 'spec/fixtures/blank-assets-archived/tier1-erb-scss'
-      @installer.install_from_file_system filename
-      verify_end_to_end_operation
     end
   end
 
@@ -428,6 +366,9 @@ end
       @installer.add_to_asset_precompilation_list 'magenta'
       count = File.read('config/environments/production.rb').split("\n").grep(
   /^\s*config.assets.precompile \+= %w\( railsthemes_magenta\.js railsthemes_magenta\.css \)$/).count
+      count.should == 1
+      count = File.read('config/environments/production.rb').split("\n").grep(
+  /^\s*config.assets.precompile \+= %w\( railsthemes_orange\.js railsthemes_orange\.css \)$/).count
       count.should == 1
     end
   end

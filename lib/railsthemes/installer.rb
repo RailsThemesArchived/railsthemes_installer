@@ -46,12 +46,13 @@ module Railsthemes
       Ensurer.ensure_clean_install_possible :server => false
 
       # install main theme
-      if File.directory?(filepath) || Utils.archive?(filepath + '.tar.gz')
+      filepath = filepath.gsub(/\\/, '/')
+      filepath += '.tar.gz' if Utils.archive?(filepath + '.tar.gz')
+      if Utils.archive?(filepath)
+        install_from_archive filepath
+      elsif File.directory?(filepath)
         theme_installer.install_from_file_system filepath
-        if Dir['app/mailers/railsthemes*'].count > 0
-          email_installer.install
-          @installed_email = true
-        end
+        @installed_email = email_installer.install_from_file_system filepath
       else
         Safe.log_and_abort "Could not find the file you need: #{filepath}"
       end
@@ -62,6 +63,13 @@ module Railsthemes
 
       print_post_installation_instructions
       popup_documentation if @doc_popup
+    end
+
+    def install_from_archive filepath
+      Railsthemes::Utils.with_tempdir do |tempdir|
+        Utils.unarchive filepath, tempdir
+        install_from_file_system tempdir
+      end
     end
 
     def install_from_code code
