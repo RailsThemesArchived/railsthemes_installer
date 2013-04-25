@@ -53,16 +53,16 @@ module Railsthemes
       elsif File.directory?(filepath)
         theme_installer.install_from_file_system filepath
         @installed_email = email_installer.install_from_file_system filepath
+
+        logger.warn 'Bundling to install new gems...'
+        Safe.system_call 'bundle'
+        logger.warn 'Done bundling.'
+
+        print_post_installation_instructions
+        popup_documentation if @doc_popup
       else
         Safe.log_and_abort "Could not find the file you need: #{filepath}"
       end
-
-      logger.warn 'Bundling to install new gems...'
-      Safe.system_call 'bundle'
-      logger.warn 'Done bundling.'
-
-      print_post_installation_instructions
-      popup_documentation if @doc_popup
     end
 
     def install_from_archive filepath

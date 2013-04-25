@@ -5,7 +5,6 @@ module Railsthemes
     def install_from_file_system source_filepath
       theme_name = Utils.read_file(File.join(source_filepath, 'theme_name')).chomp
       if Dir["app/mailers/railsthemes_#{theme_name}/*"].count > 0
-
         logger.warn 'Installing email...'
         logger.info "Source filepath: #{source_filepath}"
 
