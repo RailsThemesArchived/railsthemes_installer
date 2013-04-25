@@ -158,7 +158,7 @@ module Railsthemes
     private
 
     def override? dest
-      dest =~ /overrides/ && File.exists?(dest)
+      (dest =~ /overrides/ || dest =~ /_header_navigation/) && File.exists?(dest)
     end
 
     def system_file? src

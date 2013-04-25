@@ -117,9 +117,9 @@ describe Railsthemes::ThemeInstaller do
       end
     end
 
-    describe 'override file behavior' do
+    describe 'override stylesheet file behavior' do
       before do
-        create_file 'theme/stylesheets/overrides.css.scss', :content => 'the override'
+        create_file 'theme/stylesheets/overrides.css.scss', :content => 'overridden'
         @filename = 'app/assets/stylesheets/overrides.css.scss'
       end
 
@@ -133,7 +133,51 @@ describe Railsthemes::ThemeInstaller do
       it 'should create override files when they do not already exist' do
         @installer.install_from_file_system('theme')
         File.should exist(@filename)
-        File.read(@filename).should == 'the override'
+        File.read(@filename).should == 'overridden'
+      end
+    end
+
+    describe 'keep header navigation if it exists' do
+      context 'erb' do
+        before do
+          basename = '_header_navigation.html.erb'
+          create_file "theme/layouts/#{basename}", :content => 'overridden'
+          @filename = "app/views/layouts/#{basename}"
+        end
+
+        it 'should not overwrite override files when they already exist' do
+          create_file @filename, :content => 'do not replace'
+          @installer.install_from_file_system('theme')
+          File.should exist(@filename)
+          File.read(@filename).should =~ /do not replace/
+        end
+
+        it 'should create override files when they do not already exist' do
+          @installer.install_from_file_system('theme')
+          File.should exist(@filename)
+          File.read(@filename).should == 'overridden'
+        end
+      end
+
+      context 'haml' do
+        before do
+          basename = '_header_navigation.html.haml'
+          create_file "theme/layouts/#{basename}", :content => 'overridden'
+          @filename = "app/views/layouts/#{basename}"
+        end
+
+        it 'should not overwrite override files when they already exist' do
+          create_file @filename, :content => 'do not replace'
+          @installer.install_from_file_system('theme')
+          File.should exist(@filename)
+          File.read(@filename).should =~ /do not replace/
+        end
+
+        it 'should create override files when they do not already exist' do
+          @installer.install_from_file_system('theme')
+          File.should exist(@filename)
+          File.read(@filename).should == 'overridden'
+        end
       end
     end
 
