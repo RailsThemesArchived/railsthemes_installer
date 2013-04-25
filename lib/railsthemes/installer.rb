@@ -50,6 +50,7 @@ module Railsthemes
         theme_installer.install_from_file_system filepath
         if Dir['app/mailers/railsthemes*'].count > 0
           email_installer.install
+          @installed_email = true
         end
       else
         Safe.log_and_abort "Could not find the file you need: #{filepath}"
