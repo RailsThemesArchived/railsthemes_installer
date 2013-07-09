@@ -295,7 +295,7 @@ end
     it 'should add routing if it has not been generated yet' do
       @installer.create_railsthemes_demo_routes
       File.read('config/routes.rb').split("\n").grep(
-        /get 'railsthemes', controller: :railsthemes, action: :index/
+        /match '\/' => 'railsthemes#index'/
       ).count.should == 1
     end
 
@@ -303,7 +303,7 @@ end
       @installer.create_railsthemes_demo_routes
       @installer.create_railsthemes_demo_routes
       File.read('config/routes.rb').split("\n").grep(
-        /get 'railsthemes', controller: :railsthemes, action: :index/
+        /match '\/' => 'railsthemes#index'/
       ).count.should == 1
     end
 
@@ -311,7 +311,7 @@ end
       it 'should add root route' do
         @installer.create_railsthemes_demo_routes
         File.read('config/routes.rb').split("\n").grep(
-          '  root :to => "railsthemes#index"'
+          '  root :to => "railsthemes/railsthemes#index"'
         ).count.should == 1
       end
     end
@@ -321,7 +321,7 @@ end
         @installer.create_railsthemes_demo_routes
         @installer.create_railsthemes_demo_routes
         File.read('config/routes.rb').split("\n").grep(
-          '  root :to => "railsthemes#index"'
+          '  root :to => "railsthemes/railsthemes#index"'
         ).count.should == 1
       end
     end
