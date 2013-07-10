@@ -221,6 +221,7 @@ describe Railsthemes::ThemeInstaller do
           lines.grep(/^gem 'sass'/).count.should == 1
           lines.grep(/^gem 'jquery-rails'/).count.should == 1
           lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+          lines.grep(/^gem 'coderay'/).count.should == 1
         end
       end
 
@@ -232,6 +233,7 @@ describe Railsthemes::ThemeInstaller do
           lines.grep(/^gem 'sass'/).count.should == 1
           lines.grep(/^gem 'jquery-rails'/).count.should == 1
           lines.grep(/^gem 'jquery-ui-rails'/).count.should == 1
+          lines.grep(/^gem 'coderay'/).count.should == 1
         end
       end
     end

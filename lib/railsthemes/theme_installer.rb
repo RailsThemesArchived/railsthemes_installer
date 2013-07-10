@@ -105,7 +105,11 @@ module Railsthemes
     # so if the gemspecs are in the Gemfile.lock, then the gem is in the Gemfile
     def add_needed_gems
       installed_gems = Utils.gemspecs.map(&:name)
-      ['sass', 'jquery-rails', 'jquery-ui-rails'].each do |gemname|
+      ['sass',
+       'jquery-rails',
+       'jquery-ui-rails',
+       'coderay',
+      ].each do |gemname|
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
       end
 
