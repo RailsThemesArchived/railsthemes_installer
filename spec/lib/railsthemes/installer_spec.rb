@@ -233,8 +233,8 @@ describe Railsthemes::Installer do
     it 'should return nil when cannot download' do
       stub(Railsthemes::Utils).get_primary_configuration { [] }
       FakeWeb.register_uri :get,
-        'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=',
-        :body => '', :status => ['401', 'Unauthorized']
+        'https://railsthemes.com/download?code=panozzaj@gmail.com:code&config=&v=2',
+        :body => 'Unauthorized', :status => ['401', 'Unauthorized']
       result = @installer.get_download_url 'panozzaj@gmail.com:code'
       result.should == nil
     end

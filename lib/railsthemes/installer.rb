@@ -87,7 +87,7 @@ module Railsthemes
           install_from_file_system File.join(tempdir, 'rt-archive')
         end
       else
-        Safe.log_and_abort "We didn't recognize the code you gave to download the theme (#{code}). " +
+        Safe.log_and_abort "We didn't recognize the code you gave to download the theme (#{code}).\n" +
                            "It should look something like your@email.com:ABCDEF."
       end
     end
@@ -110,7 +110,8 @@ module Railsthemes
         if response.code.to_s == '200'
           response.body
         else
-          logger.debug "download_url response code: #{response(:code)}"
+          logger.debug "download_url response code: #{response[:code]}"
+          nil
         end
       end
     end
