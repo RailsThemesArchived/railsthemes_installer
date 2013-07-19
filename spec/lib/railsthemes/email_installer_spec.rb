@@ -47,8 +47,8 @@ describe Railsthemes::EmailInstaller do
 
   describe '#add_to_asset_precompilation_list' do
     before do
-      create_file 'app/assets/stylesheets/railsthemes_magenta/1_email.css.erb'
-      create_file 'app/assets/stylesheets/railsthemes_magenta/2_email.css.erb'
+      create_file 'app/assets/stylesheets/railsthemes/1_email.css.erb'
+      create_file 'app/assets/stylesheets/railsthemes/2_email.css.erb'
     end
 
     it 'should add it to the list if the line is not there yet' do
@@ -57,11 +57,11 @@ BaseApp::Application.configure do
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
 end
       EOS
-      @installer.add_to_asset_precompilation_list 'magenta'
+      @installer.add_to_asset_precompilation_list
       File.read('config/environments/production.rb').should == <<-EOS
 BaseApp::Application.configure do
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
-  config.assets.precompile += %w( railsthemes_magenta/1_email.css railsthemes_magenta/2_email.css )
+  config.assets.precompile += %w( railsthemes/1_email.css railsthemes/2_email.css )
 end
 EOS
     end
@@ -71,15 +71,15 @@ EOS
 BaseApp::Application.configure do
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
   config.assets.precompile += %w( railsthemes_magenta.js railsthemes_magenta.css )
-  config.assets.precompile += %w( railsthemes_magenta/1_email.css )
+  config.assets.precompile += %w( railsthemes/1_email.css )
 end
       EOS
-      @installer.add_to_asset_precompilation_list 'magenta'
+      @installer.add_to_asset_precompilation_list
       File.read('config/environments/production.rb').should == <<-EOS
 BaseApp::Application.configure do
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
   config.assets.precompile += %w( railsthemes_magenta.js railsthemes_magenta.css )
-  config.assets.precompile += %w( railsthemes_magenta/1_email.css railsthemes_magenta/2_email.css )
+  config.assets.precompile += %w( railsthemes/1_email.css railsthemes/2_email.css )
 end
 EOS
     end
@@ -91,7 +91,7 @@ BaseApp::Application.configure do
   config.assets.precompile += %w( railsthemes_orange/email1.css )
 end
       EOS
-      @installer.add_to_asset_precompilation_list 'magenta'
+      @installer.add_to_asset_precompilation_list
     end
   end
 end

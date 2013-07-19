@@ -2,13 +2,12 @@ module Railsthemes
   class EmailInstaller
     include Railsthemes::Logging
 
-    def email_stylesheet_filenames theme_name
-      Dir["app/assets/stylesheets/railsthemes_#{theme_name}/*_email.css.*"]
+    def email_stylesheet_filenames
+      Dir["app/assets/stylesheets/railsthemes/*_email.css.*"]
     end
 
     def install_from_file_system source_filepath
-      theme_name = Utils.read_file(File.join(source_filepath, 'theme_name')).chomp
-      if email_stylesheet_filenames(theme_name).count > 0
+      if email_stylesheet_filenames.count > 0
         logger.warn 'Installing email...'
         logger.info "Source filepath: #{source_filepath}"
 
@@ -16,7 +15,7 @@ module Railsthemes
           Safe.log_and_abort 'Expected a directory to install email theme from, but found none.'
         end
 
-        add_to_asset_precompilation_list theme_name
+        add_to_asset_precompilation_list
         install_mail_gems_if_necessary
 
         logger.warn 'Done installing email.'
@@ -26,14 +25,14 @@ module Railsthemes
       end
     end
 
-    def add_to_asset_precompilation_list theme_name
-      filenames = email_stylesheet_filenames(theme_name).map do |filename|
-        "railsthemes_#{theme_name}/#{File.basename(filename.gsub(/\.erb$/, ''))}"
+    def add_to_asset_precompilation_list
+      filenames = email_stylesheet_filenames.map do |filename|
+        "railsthemes/#{File.basename(filename.gsub(/\.erb$/, ''))}"
       end
       updated_or_new_line = "  config.assets.precompile += %w( #{filenames.join(' ')} )"
 
       config_lines = Utils.lines('config/environments/production.rb')
-      email_regex = /^\s*config.assets.precompile\s*\+=\s*%w\(\s*railsthemes_#{theme_name}\/\w*email\.css.*\)$/
+      email_regex = /^\s*config.assets.precompile\s*\+=\s*%w\(\s*railsthemes\/\w*email\.css.*\)$/
       count = config_lines.grep(email_regex).count
       if count == 0 # precompile line we want not found, add it
         added = false # only want to add the new line once
