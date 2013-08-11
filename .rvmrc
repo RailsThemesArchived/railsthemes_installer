@@ -1,2 +1,0 @@
-# because "Rails 4 requires at least Ruby 1.9.3"
-rvm use ruby-1.9.3@railsthemes --create
