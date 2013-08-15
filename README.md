@@ -1,4 +1,6 @@
-# Railsthemes
+# Railsthemes Installer
+
+[![Build Status](https://travis-ci.org/RailsThemes/railsthemes_installer.png)](https://travis-ci.org/RailsThemes/railsthemes_installer)
 
 This is a gem that helps you install a theme for your Rails app from RailsThemes.com. First, purchase a theme from the website. Then, install this gem and run it. You will get a download code, and you can pass this to the installer to install the theme (see below usage.) The themes at RailsThemes.com work for Rails 3.1+ (any that use the asset pipeline.)
 
