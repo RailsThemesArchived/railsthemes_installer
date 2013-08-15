@@ -10,6 +10,7 @@ group :test do
   gem 'aruba', :github => 'cucumber/aruba'
   gem 'fakefs', :require => 'fakefs/safe', :git => 'https://github.com/defunkt/fakefs.git'
   gem 'fakeweb'
+  gem 'rake'    # needed for TravisCI
   gem 'rr'
   gem 'rspec'
 end
