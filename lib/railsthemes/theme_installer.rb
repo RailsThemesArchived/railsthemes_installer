@@ -66,18 +66,15 @@ module Railsthemes
 
   # Routes to RailsThemes Theme Example markup:
   namespace :railsthemes do
-    match '/' => 'railsthemes#index'
-    match '/previews', controller: :previews, action: :index
-    match '/previews/:name', controller: :previews, action: :show
-    match '/previews/:feature/:partial', controller: :previews, action: :partial
-    match '/:action', controller: :railsthemes
+    match '/' => 'railsthemes#index', :via => [:get]
+    match '/:action', :controller => :railsthemes, :via => [:get, :post]
   end
 
   # This is magical routing for errors (instead of using the static markup in
   # public/*.html)
-  match '/403', to: 'railsthemes_errors#403_forbidden'
-  match '/404', to: 'railsthemes_errors#404_not_found'
-  match '/500', to: 'railsthemes_errors#500_internal_server_error'
+  match '/403' => 'railsthemes_errors#403_forbidden', :via => [:get]
+  match '/404' => 'railsthemes_errors#404_not_found', :via => [:get]
+  match '/500' => 'railsthemes_errors#500_internal_server_error', :via => [:get]
 
   ### End RailsThemes basic generated routes ###
       EOS
@@ -105,11 +102,12 @@ module Railsthemes
     # so if the gemspecs are in the Gemfile.lock, then the gem is in the Gemfile
     def add_needed_gems
       installed_gems = Utils.gemspecs.map(&:name)
-      ['sass',
-       'jquery-rails',
-       'jquery-ui-rails',
-       'coderay',
-      ].each do |gemname|
+      %w(
+        sass
+        jquery-rails
+        jquery-ui-rails
+        coderay
+      ).each do |gemname|
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
       end
 
