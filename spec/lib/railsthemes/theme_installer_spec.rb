@@ -280,6 +280,13 @@ describe Railsthemes::ThemeInstaller do
             end
           end
         end
+
+        describe 'turbo-sprockets-rails3' do
+          it 'should not add it, since we are above Rails 3' do
+            do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('turbo-sprockets-rails3')
+            @installer.add_needed_gems
+          end
+        end
       end
 
       context 'Rails < 4.0.0 app' do
@@ -318,6 +325,19 @@ describe Railsthemes::ThemeInstaller do
               do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('zurb-foundation')
               @installer.add_needed_gems
             end
+          end
+        end
+
+        describe 'turbo-sprockets-rails3' do
+          it 'should not add it, since we are above Rails 3' do
+            mock(Railsthemes::Utils).add_gem_to_gemfile('turbo-sprockets-rails3', group: 'assets')
+            @installer.add_needed_gems
+          end
+
+          it 'should not re-add it if it already exists' do
+            write_gemfiles_using_gems :assets => ['turbo-sprockets-rails3']
+            do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('turbo-sprockets-rails3')
+            @installer.add_needed_gems
           end
         end
       end

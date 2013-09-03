@@ -111,6 +111,12 @@ module Railsthemes
         Utils.add_gem_to_gemfile gemname unless installed_gems.include?(gemname)
       end
 
+      add_compass_rails_gem installed_gems
+      add_zurb_foundation_gem installed_gems
+      add_turbo_sprockets_gem installed_gems
+    end
+
+    def add_compass_rails_gem installed_gems
       unless installed_gems.include?('compass-rails')
         if Gem::Version.new(GemfileUtils.rails_version) < Gem::Version.new('4.0.0')
           Utils.add_gem_to_gemfile('compass-rails', :group => 'assets')
@@ -119,12 +125,22 @@ module Railsthemes
           Utils.add_gem_to_gemfile('compass-rails', :version => '~> 2.0.alpha.0')
         end
       end
+    end
 
+    def add_zurb_foundation_gem installed_gems
       unless installed_gems.include?('zurb-foundation')
         if Gem::Version.new(GemfileUtils.rails_version) < Gem::Version.new('4.0.0')
           Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0', :group => 'assets')
         else
           Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0')
+        end
+      end
+    end
+
+    def add_turbo_sprockets_gem installed_gems
+      if Gem::Version.new(GemfileUtils.rails_version) < Gem::Version.new('4.0.0')
+        unless installed_gems.include?('turbo-sprockets-rails3')
+          Utils.add_gem_to_gemfile('turbo-sprockets-rails3', :group => 'assets')
         end
       end
     end
