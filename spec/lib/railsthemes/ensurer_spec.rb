@@ -151,21 +151,9 @@ describe Railsthemes::Ensurer do
     end
   end
 
-  describe '#rails_version' do
-    it 'should return the right version' do
-      gemfile = using_gem_specs :rails => '3.0.1'
-      Railsthemes::Ensurer.rails_version(gemfile).version.should == '3.0.1'
-    end
-
-    it 'should return nil if there is no rails present' do
-      gemfile = using_gem_specs
-      Railsthemes::Ensurer.rails_version(gemfile).should be_nil
-    end
-  end
-
   describe '#ensure_rails_version_is_valid' do
     it 'should ask the user if they still want to install when the gemfile does not exist' do
-      stub(Railsthemes::Ensurer).rails_version { Gem::Version.new('3.2.0') }
+      stub(Railsthemes::GemfileUtils).rails_version { Gem::Version.new('3.2.0') }
       mock(Railsthemes::Ensurer).ask_to_install_unsupported
       Railsthemes::Ensurer.ensure_rails_version_is_valid
     end
@@ -176,13 +164,13 @@ describe Railsthemes::Ensurer do
       end
 
       it 'should ask the user if they still want to install when the rails version is < 3.1' do
-        stub(Railsthemes::Ensurer).rails_version { Gem::Version.new('3.0.9') }
+        stub(Railsthemes::GemfileUtils).rails_version { Gem::Version.new('3.0.9') }
         mock(Railsthemes::Ensurer).ask_to_install_unsupported
         Railsthemes::Ensurer.ensure_rails_version_is_valid
       end
 
       it 'should not ask if they still want to install when the rails version is supported' do
-        stub(Railsthemes::Ensurer).rails_version { Gem::Version.new('3.1.0') }
+        stub(Railsthemes::GemfileUtils).rails_version { Gem::Version.new('3.1.0') }
         dont_allow(Railsthemes::Ensurer).ask_to_install_unsupported
         Railsthemes::Ensurer.ensure_rails_version_is_valid
       end

@@ -122,7 +122,7 @@ module Railsthemes
     def self.get_primary_configuration gemfile_contents = read_file('Gemfile.lock')
       gem_names = gemspecs(gemfile_contents).map(&:name)
       [(gem_names.include?('haml') ? 'haml' : 'erb'),
-        (gem_names.include?('sass') ? 'scss' : 'css')]
+       (gem_names.include?('sass') ? 'scss' : 'css')]
     end
 
     def self.insert_into_routes_file! to_insert

@@ -8,6 +8,7 @@ describe Railsthemes::ThemeInstaller do
 
     # would be interesting to see if we still need these
     FileUtils.touch('Gemfile.lock')
+    stub(Railsthemes::GemfileUtils).rails_version.times(any_times) { '0' }
   end
 
   describe :install_from_file_system do
@@ -225,7 +226,7 @@ describe Railsthemes::ThemeInstaller do
 
       context 'are present' do
         it 'should not readd them' do
-          write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails'
+          write_gemfiles_using_gems 'sass', 'jquery-rails', 'jquery-ui-rails', 'coderay'
           @installer.add_needed_gems
           lines = File.read('Gemfile').split("\n")
           lines.grep(/^gem 'sass'/).count.should == 1
@@ -237,50 +238,88 @@ describe Railsthemes::ThemeInstaller do
     end
 
     describe 'asset gems' do
-      context 'gems are not present' do
-        it 'should add them' do
-          create_file 'Gemfile'
-          @installer.add_needed_gems
-          lines = File.read('Gemfile').split("\n")
-          lines.grep(/gem 'compass-rails'/).count.should == 1
-          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+      before do
+        stub(Railsthemes::Utils).add_gem_to_gemfile
+      end
+
+      context 'Rails ~> 4.0.0 app' do
+        before do
+          stub(Railsthemes::GemfileUtils).rails_version { '4.0.0' }
+        end
+
+        describe 'compass-rails' do
+          context 'gem is not present' do
+            it 'should add it without group' do
+              mock(Railsthemes::Utils).add_gem_to_gemfile('compass-rails', version: '~> 2.0.alpha.0')
+              @installer.add_needed_gems
+            end
+          end
+
+          context 'gem is present' do
+            it 'should not try to add it' do
+              write_gemfiles_using_gems ['compass-rails']
+              do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('compass-rails')
+              @installer.add_needed_gems
+            end
+          end
+        end
+
+        describe 'zurb-foundation' do
+          context 'gem is not present' do
+            it 'should add it without group' do
+              mock(Railsthemes::Utils).add_gem_to_gemfile('zurb-foundation', version: '~> 4.0')
+              @installer.add_needed_gems
+            end
+          end
+
+          context 'gem is present' do
+            it 'should not try to add it' do
+              write_gemfiles_using_gems ['zurb-foundation']
+              do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('zurb-foundation')
+              @installer.add_needed_gems
+            end
+          end
         end
       end
 
-      context 'gems are present' do
-        it 'should not add them' do
-          write_gemfiles_using_gems :assets => ['compass-rails', 'zurb-foundation']
-          @installer.add_needed_gems
-          lines = File.read('Gemfile').split("\n")
-          lines.grep(/gem 'compass-rails'/).count.should == 1
-          lines.grep(/gem 'zurb-foundation'/).count.should == 1
-        end
-      end
-
-      context 'only one is present' do
-        it 'should add compass-rails if not present' do
-          write_gemfiles_using_gems :assets => ['zurb-foundation']
-          @installer.add_needed_gems
-          lines = File.read('Gemfile').split("\n")
-          lines.grep(/gem 'compass-rails'/).count.should == 1
-          lines.grep(/gem 'zurb-foundation'/).count.should == 1
+      context 'Rails < 4.0.0 app' do
+        before do
+          stub(Railsthemes::GemfileUtils).rails_version { '3.2.14' }
         end
 
-        it 'should add zurb-foundation if not present' do
-          write_gemfiles_using_gems :assets => ['compass-rails']
-          @installer.add_needed_gems
-          lines = File.read('Gemfile').split("\n")
-          lines.grep(/gem 'compass-rails'/).count.should == 1
-          lines.grep(/gem 'zurb-foundation'/).count.should == 1
-        end
-      end
+        describe 'compass-rails' do
+          context 'gem is not present' do
+            it 'should add it with group' do
+              mock(Railsthemes::Utils).add_gem_to_gemfile('compass-rails', group: 'assets')
+              @installer.add_needed_gems
+            end
+          end
 
-      it 'should specify the right version of zurb-foundation' do
-        write_gemfiles_using_gems :assets => ['compass-rails']
-        @installer.add_needed_gems
-        lines = File.read('Gemfile').split("\n")
-        matches = lines.grep(/gem 'zurb-foundation'/)
-        matches.first.should =~ /'~> 4\.0'/
+          context 'gem is present' do
+            it 'should not try to add it' do
+              write_gemfiles_using_gems :assets => ['compass-rails']
+              do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('compass-rails')
+              @installer.add_needed_gems
+            end
+          end
+        end
+
+        describe 'zurb-foundation' do
+          context 'gem is not present' do
+            it 'should add it without group' do
+              mock(Railsthemes::Utils).add_gem_to_gemfile('zurb-foundation', version: '~> 4.0', group: 'assets')
+              @installer.add_needed_gems
+            end
+          end
+
+          context 'gem is present' do
+            it 'should not try to add it' do
+              write_gemfiles_using_gems :assets => ['zurb-foundation']
+              do_not_allow(Railsthemes::Utils).add_gem_to_gemfile('zurb-foundation')
+              @installer.add_needed_gems
+            end
+          end
+        end
       end
     end
   end

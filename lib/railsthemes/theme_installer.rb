@@ -114,11 +114,20 @@ module Railsthemes
       end
 
       unless installed_gems.include?('compass-rails')
-        Utils.add_gem_to_gemfile('compass-rails', :group => 'assets')
+        if Gem::Version.new(GemfileUtils.rails_version) < Gem::Version.new('4.0.0')
+          Utils.add_gem_to_gemfile('compass-rails', :group => 'assets')
+        else
+          # see http://stackoverflow.com/questions/17341042, compass-rails + Rails 4 issues
+          Utils.add_gem_to_gemfile('compass-rails', :version => '~> 2.0.alpha.0')
+        end
       end
 
       unless installed_gems.include?('zurb-foundation')
-        Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0', :group => 'assets')
+        if Gem::Version.new(GemfileUtils.rails_version) < Gem::Version.new('4.0.0')
+          Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0', :group => 'assets')
+        else
+          Utils.add_gem_to_gemfile('zurb-foundation', :version => '~> 4.0')
+        end
       end
     end
 

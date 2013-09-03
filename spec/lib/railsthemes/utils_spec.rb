@@ -48,11 +48,23 @@ describe Railsthemes::Utils do
   describe 'add_gem_to_gemfile' do
     it 'should add the gem to the Gemfile' do
       Railsthemes::Utils.add_gem_to_gemfile 'test'
-      Railsthemes::Utils.add_gem_to_gemfile 'test2'
       lines = File.open('Gemfile').readlines.map(&:strip)
-      lines.count.should == 2
-      lines[0].should =~ /^gem 'test'/
-      lines[1].should =~ /^gem 'test2'/
+      lines.count.should == 1
+      lines[0].should == "gem 'test' # RailsThemes"
+    end
+
+    it 'should add the gem to the Gemfile with a group when group specified' do
+      Railsthemes::Utils.add_gem_to_gemfile 'test', group: 'mygroup'
+      lines = File.open('Gemfile').readlines.map(&:strip)
+      lines.count.should == 1
+      lines[0].should == "gem 'test', :group => 'mygroup' # RailsThemes"
+    end
+
+    it 'should add the gem to the Gemfile with a specific version when version specified' do
+      Railsthemes::Utils.add_gem_to_gemfile 'test', version: '> 2.0.3'
+      lines = File.open('Gemfile').readlines.map(&:strip)
+      lines.count.should == 1
+      lines[0].should == "gem 'test', '> 2.0.3' # RailsThemes"
     end
   end
 

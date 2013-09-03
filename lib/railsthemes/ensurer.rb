@@ -49,7 +49,8 @@ Please roll back or commit the changes before proceeding to ensure that you can 
     end
 
     def self.ensure_rails_version_is_valid
-      unless File.exists?('Gemfile.lock') && Gem::Version.new('3.1') <= rails_version
+      unless File.exists?('Gemfile.lock') &&
+          Gem::Version.new('3.1') <= Railsthemes::GemfileUtils.rails_version
         ask_to_install_unsupported
       end
     end
@@ -132,13 +133,6 @@ Please run `bundle` and try installing again.
 EOS
       end
       logger.warn "Done checking bundle."
-    end
-
-    def self.rails_version gemfile_contents = nil
-      gemfile_contents ||= Utils.read_file('Gemfile.lock')
-      specs = Utils.gemspecs(gemfile_contents)
-      rails = specs.select{ |x| x.name == 'rails' }.first
-      rails.version if rails && rails.version
     end
 
     def self.ensure_railsthemes_is_not_in_gemfile gemfile_contents = nil
