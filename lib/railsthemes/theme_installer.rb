@@ -139,6 +139,7 @@ module Railsthemes
             f.puts line
             if !added && (line =~ /Precompile additional assets/ || line =~ /config\.assets\.precompile/)
               f.puts "  config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
+              f.puts "  config.assets.precompile += %w( coderay.css )"
               added = true
             end
           end
