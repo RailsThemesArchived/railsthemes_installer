@@ -1,10 +1,8 @@
 require 'spec_helper'
-require 'railsthemes'
 require 'json'
 
 describe Railsthemes::ThemeInstaller do
   before do
-    setup_logger
     @installer = Railsthemes::ThemeInstaller.new
     @tempdir = stub_tempdir
 

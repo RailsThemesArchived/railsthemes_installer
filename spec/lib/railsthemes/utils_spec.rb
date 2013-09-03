@@ -1,11 +1,6 @@
 require 'spec_helper'
-require 'railsthemes'
 
 describe Railsthemes::Utils do
-  before do
-    setup_logger
-  end
-
   describe :archive? do
     it 'should be false if the file does not exist' do
       Railsthemes::Utils.archive?('test/a/b/c/d.tar.gz').should be_false

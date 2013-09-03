@@ -1,11 +1,6 @@
 require 'spec_helper'
-require 'railsthemes'
 
 describe Railsthemes::Ensurer do
-  before do
-    setup_logger
-  end
-
   describe :ensure_clean_install_possible do
     it 'should not do twice normally' do
       mock(Railsthemes::Ensurer).ensure_in_rails_root.times(1)

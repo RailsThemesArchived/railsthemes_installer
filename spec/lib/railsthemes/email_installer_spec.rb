@@ -1,9 +1,7 @@
 require 'spec_helper'
-require 'railsthemes'
 
 describe Railsthemes::EmailInstaller do
   before do
-    setup_logger
     @installer = Railsthemes::EmailInstaller.new
     @tempdir = stub_tempdir
   end

@@ -1,9 +1,7 @@
 require 'spec_helper'
-require 'railsthemes'
 
 describe Railsthemes::Switcher do
   before do
-    setup_logger
     @switcher = Railsthemes::Switcher.new
     @tempdir = stub_tempdir
   end

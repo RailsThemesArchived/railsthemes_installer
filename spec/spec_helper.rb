@@ -4,6 +4,7 @@ require 'logger'
 require 'fakefs/spec_helpers'
 require 'fakeweb'
 require 'rr'
+require 'railsthemes'
 
 LOGFILE_NAME = 'railsthemes.log'
 
@@ -13,6 +14,7 @@ RSpec.configure do |config|
 
   config.before :suite do
     File.delete(LOGFILE_NAME) if File.exists?(LOGFILE_NAME)
+    setup_logger
   end
 
   # RSpec automatically cleans stuff out of backtraces;
@@ -29,8 +31,13 @@ end
 FakeWeb.allow_net_connect = false
 
 def write_gemfiles_using_gems *gems
+  unless File.exist?('Gemfile')
+    File.open('Gemfile', 'w') do |f|
+      f.puts "source :rubygems"
+    end
+  end
+
   File.open('Gemfile', 'a') do |f|
-    f.puts "source :rubygems"
     gems.each do |gem|
       if gem.is_a? Hash
         gem.each do |group, inner_gems|
@@ -57,6 +64,7 @@ def write_gemfiles_using_gems *gems
       gem
     end
   end.flatten
+
   File.open('Gemfile.lock', 'w') do |f|
     f.write using_gems(*gem_names)
   end
@@ -89,7 +97,6 @@ end
 
 def setup_logger
   logger = Logger.new(LOGFILE_NAME)
-  logger.info "#{self.example.description}"
   Railsthemes::Logging.logger = logger
   logger
 end
