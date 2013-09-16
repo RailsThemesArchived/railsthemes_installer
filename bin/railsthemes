@@ -18,6 +18,7 @@ Usage:
 railsthemes -v                       # Print the version of the installer gem you are using
 railsthemes install your@email:code  # Install from RailsThemes.com using your download code
 railsthemes list                     # List all themes installed in this app
+railsthemes use                      # Switch to use a different installed theme
 railsthemes help [TASK]              # Describe available tasks or one specific task
 EOS
     end
