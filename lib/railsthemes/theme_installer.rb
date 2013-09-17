@@ -28,16 +28,17 @@ module Railsthemes
     def install_from_directory source_filepath
       copy_theme_portions source_filepath, [
         ['controllers', 'app'],
-        ['helpers', 'app'],
-        ['layouts', 'app/views'],
-        ['stylesheets', 'app/assets'],
+        ['doc',         ''],
+        ['fonts',       'app/assets'],
+        ['helpers',     'app'],
+        ['images',      'app/assets'],
         ['javascripts', 'app/assets'],
-        ['doc', ''],
-        ['images', 'app/assets'],
-        ['mailers', 'app'],
-        ['views', 'app'],
-        ['fonts', 'app/assets'],
-        ['vendor', ''],
+        ['layouts',     'app/views'],
+        ['lib',         ''],
+        ['mailers',     'app'],
+        ['stylesheets', 'app/assets'],
+        ['vendor',      ''],
+        ['views',       'app'],
       ]
 
       logger.warn 'Done installing.'

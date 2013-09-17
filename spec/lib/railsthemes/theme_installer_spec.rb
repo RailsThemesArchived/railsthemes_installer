@@ -80,7 +80,13 @@ describe Railsthemes::ThemeInstaller do
           filesystem_should_match ['app/assets/fonts/railsthemes_themename/myfont.ttf']
         end
 
-        it 'should copy fonts' do
+        it 'should copy lib files' do
+          create_file 'theme/lib/railsthemes/sass.rb'
+          @installer.install_from_file_system('theme')
+          filesystem_should_match ['lib/railsthemes/sass.rb']
+        end
+
+        it 'should copy vendored stylesheets' do
           create_file 'theme/vendor/assets/stylesheets/coderay.css'
           @installer.install_from_file_system('theme')
           filesystem_should_match ['vendor/assets/stylesheets/coderay.css']
