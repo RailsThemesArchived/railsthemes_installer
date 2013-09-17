@@ -52,6 +52,7 @@ module Railsthemes
       Utils.set_layout_in_application_controller theme_name
       add_to_asset_precompilation_list theme_name
       comment_out_formtastic_if_user_does_not_use_formtastic theme_name
+      add_sass_module_line
     end
 
     def remove_unwanted_public_files
@@ -158,6 +159,27 @@ module Railsthemes
               f.puts "  config.assets.precompile += %w( railsthemes_#{theme_name}.js railsthemes_#{theme_name}.css )"
               f.puts "  config.assets.precompile += %w( coderay.css )"
               added = true
+            end
+          end
+        end
+      end
+    end
+
+    def add_sass_module_line
+      config_lines = Utils.lines('config/application.rb')
+      count = config_lines.grep(/sass.rb/).count
+      if count == 0
+        Utils.safe_write('config/application.rb') do |f|
+          config_lines.each do |line|
+            f.puts line
+            if line =~ / < Rails::Application/
+              f.puts <<-EOS
+    # RailsThemes
+    if config.respond_to?(:sass)
+      require "#\{config.root}/lib/railsthemes/sass.rb"
+    end
+
+              EOS
             end
           end
         end

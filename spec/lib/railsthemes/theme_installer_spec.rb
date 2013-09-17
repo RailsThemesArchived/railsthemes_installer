@@ -192,6 +192,7 @@ describe Railsthemes::ThemeInstaller do
       mock(Railsthemes::Utils).set_layout_in_application_controller 'theme_name'
       mock(@installer).add_to_asset_precompilation_list 'theme_name'
       mock(@installer).comment_out_formtastic_if_user_does_not_use_formtastic 'theme_name'
+      mock(@installer).add_sass_module_line
       @installer.post_copying_changes 'theme_name'
     end
   end
@@ -469,6 +470,32 @@ end
       it 'should comment out the line' do
         @installer.comment_out_formtastic_if_user_does_not_use_formtastic 'themename'
         File.read(@filename).split("\n").grep(/\* require formtastic/).count.should == 1
+      end
+    end
+  end
+
+  describe '#add_sass_module_line' do
+      before do
+        create_file 'config/application.rb', :content => <<-EOS
+module Rails3214
+  class Application < Rails::Application
+  end
+end
+        EOS
+      end
+
+    context 'the content does not already exist' do
+      it 'should add the lines' do
+        @installer.add_sass_module_line
+        File.read('config/application.rb').split("\n").grep(/sass.rb/).count.should == 1
+      end
+    end
+
+    context 'the line already exists' do
+      it 'should not add it again' do
+        @installer.add_sass_module_line
+        @installer.add_sass_module_line
+        File.read('config/application.rb').split("\n").grep(/sass.rb/).count.should == 1
       end
     end
   end
