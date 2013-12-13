@@ -124,7 +124,7 @@ module Railsthemes
           Utils.add_gem_to_gemfile('compass-rails', :group => 'assets')
         else
           # see http://stackoverflow.com/questions/17341042, compass-rails + Rails 4 issues
-          Utils.add_gem_to_gemfile('compass-rails', :version => '~> 2.0.alpha.0')
+          Utils.add_gem_to_gemfile('compass-rails', :version => '~> 1.1.0')
         end
       end
     end

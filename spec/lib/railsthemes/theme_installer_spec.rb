@@ -257,7 +257,7 @@ describe Railsthemes::ThemeInstaller do
         describe 'compass-rails' do
           context 'gem is not present' do
             it 'should add it without group' do
-              mock(Railsthemes::Utils).add_gem_to_gemfile('compass-rails', version: '~> 2.0.alpha.0')
+              mock(Railsthemes::Utils).add_gem_to_gemfile('compass-rails', version: '~> 1.1.0')
               @installer.add_needed_gems
             end
           end
