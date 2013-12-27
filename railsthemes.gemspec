@@ -5,8 +5,8 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Railsthemes"]
   gem.email         = ["anthony@railsthemes.com"]
   gem.description   = %q{railsthemes.com installer gem}
-  gem.summary       = %q{Installs gems from railsthemes.com}
-  gem.homepage      = "https://github.com/RailsThemes/railsthemes"
+  gem.summary       = %q{Installs themes from railsthemes.com}
+  gem.homepage      = "https://github.com/RailsThemes/railsthemes_installer"
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
